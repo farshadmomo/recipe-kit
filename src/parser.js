@@ -51,4 +51,31 @@ function parseRecipe(text) {
   return { meta, ingredients };
 }
 
-module.exports = { parseRecipe };
+function mergeRecipes(parent, child) {
+  const meta = {
+    ...parent.meta,
+    ...child.meta,
+    extends: [],
+    routes: { ...parent.meta.routes, ...child.meta.routes },
+  };
+  const byName = new Map(parent.ingredients.map((i) => [i.name, i]));
+  for (const i of child.ingredients) byName.set(i.name, i);
+  return { meta, ingredients: [...byName.values()] };
+}
+
+function serializeRecipe({ meta, ingredients }) {
+  const lines = ['---', `name: ${meta.name}`];
+  for (const key of ['version', 'author', 'description']) {
+    if (meta[key]) lines.push(`${key}: ${meta[key]}`);
+  }
+  const routes = Object.entries(meta.routes || {});
+  if (routes.length) {
+    lines.push('routes:');
+    for (const [ch, kws] of routes) lines.push(`  ${ch}: [${kws.join(', ')}]`);
+  }
+  lines.push('---', '');
+  for (const i of ingredients) lines.push(`## [${i.tag}] ${i.name}`, '', i.body, '');
+  return lines.join('\n');
+}
+
+module.exports = { parseRecipe, mergeRecipes, serializeRecipe };

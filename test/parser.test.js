@@ -70,3 +70,26 @@ test('throws on missing name', () => {
 test('throws when no ingredients', () => {
   assert.throws(() => parseRecipe('---\nname: x\n---\njust prose\n'), /no ingredients/);
 });
+
+const { mergeRecipes, serializeRecipe } = require('../src/parser');
+
+test('mergeRecipes: child overrides same-named ingredient, keeps parent order', () => {
+  const parent = parseRecipe('---\nname: base\nauthor: alice\n---\n## [always] responses\nparent resp\n\n## [ui] design\nparent design\n');
+  const child = parseRecipe('---\nname: kid\nextends: [./base.md]\nroutes:\n  ui: [widget]\n---\n## [ui] design\nchild design\n\n## [stack] tech\nnext.js\n');
+  const m = mergeRecipes(parent, child);
+  assert.equal(m.meta.name, 'kid');
+  assert.equal(m.meta.author, 'alice');            // inherited: child has none
+  assert.deepEqual(m.meta.extends, []);             // flattened
+  assert.deepEqual(m.meta.routes, { ui: ['widget'] });
+  assert.deepEqual(m.ingredients.map((i) => [i.name, i.body]), [
+    ['responses', 'parent resp'],
+    ['design', 'child design'],
+    ['tech', 'next.js'],
+  ]);
+});
+
+test('serializeRecipe round-trips through parseRecipe', () => {
+  const r = parseRecipe(GOOD);
+  const again = parseRecipe(serializeRecipe(r));
+  assert.deepEqual(again, r);
+});

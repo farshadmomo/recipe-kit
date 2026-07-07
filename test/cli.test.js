@@ -73,6 +73,10 @@ test('bare invocation prints usage and exits 0', () => {
   assert.match(out, /usage: recipe/);
 });
 
+test('prototype-member command name fails instead of silently exiting 0', () => {
+  assertFails(() => run(tmpDir(), 'constructor'));
+});
+
 const BASE = `---
 name: base-modern
 author: alice

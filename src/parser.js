@@ -35,7 +35,9 @@ function parseRecipe(text) {
   const m = text.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n?([\s\S]*)$/);
   if (!m) throw new Error('recipe: missing frontmatter');
   const meta = parseFrontmatter(m[1]);
-  if (!meta.name) throw new Error('recipe: frontmatter needs a name');
+  if (typeof meta.name !== 'string' || !/^[A-Za-z0-9._-]+$/.test(meta.name)) {
+    throw new Error('recipe: name must be a filename-safe string (letters, digits, . _ -)');
+  }
   const body = m[2];
   const headingRe = /^## +\[(\w+)\] +(.+)$/gm;
   const ingredients = [];

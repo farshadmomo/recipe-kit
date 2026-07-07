@@ -64,7 +64,15 @@ test('throws on missing frontmatter', () => {
 });
 
 test('throws on missing name', () => {
-  assert.throws(() => parseRecipe('---\nauthor: x\n---\n## [always] a\nbody\n'), /needs a name/);
+  assert.throws(() => parseRecipe('---\nauthor: x\n---\n## [always] a\nbody\n'), /name must be/);
+});
+
+test('throws on path-traversal name', () => {
+  assert.throws(() => parseRecipe('---\nname: ../evil\n---\n## [always] a\nbody\n'), /name must be/);
+});
+
+test('throws on empty name (parses as nested map)', () => {
+  assert.throws(() => parseRecipe('---\nname:\n---\n## [always] a\nbody\n'), /name must be/);
 });
 
 test('throws when no ingredients', () => {

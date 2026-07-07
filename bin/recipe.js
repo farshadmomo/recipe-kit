@@ -11,7 +11,7 @@ const SRC = path.join(__dirname, '..', 'src');
 async function main() {
   const [cmd, arg] = process.argv.slice(2);
   const commands = { init, use, list, off, new: scaffold };
-  if (!commands[cmd]) {
+  if (!cmd || !Object.hasOwn(commands, cmd)) {
     console.log('usage: recipe <init | use <ref> | list | off | new>');
     process.exit(cmd ? 1 : 0);
   }

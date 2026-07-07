@@ -21,6 +21,9 @@ function runHook(cwd, prompt) {
   return execFileSync(process.execPath, [HOOK], {
     input: JSON.stringify({ prompt, cwd }),
     encoding: 'utf8',
+    // Hermetic: os.homedir() falls back to HOME/USERPROFILE, so point it at the
+    // tmp project dir instead of the real machine's ~/.claude/recipes/active.
+    env: { ...process.env, HOME: cwd, USERPROFILE: cwd },
   });
 }
 

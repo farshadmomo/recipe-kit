@@ -63,6 +63,21 @@ test('renderContext wraps ingredients in a recipe tag', () => {
   assert.match(out, /<\/recipe>$/);
 });
 
+test('uppercase keywords in a route override still match', () => {
+  const recipe = parseRecipe(`---
+name: caps
+routes:
+  backend: [API]
+---
+
+## [backend] server
+Stuff.
+`);
+  assert.deepEqual(
+    selectIngredients(recipe, 'the api is broken').map((i) => i.name),
+    ['server']);
+});
+
 test('renderContext returns empty string for no ingredients', () => {
   assert.equal(renderContext(RECIPE, []), '');
 });

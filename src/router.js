@@ -19,9 +19,9 @@ function escapeRe(s) {
 
 function selectIngredients(recipe, prompt) {
   const routes = { ...DEFAULT_ROUTES, ...recipe.meta.routes };
-  const p = String(prompt).toLowerCase();
+  const p = String(prompt);
   const hit = (ch) =>
-    (routes[ch] || []).some((kw) => new RegExp(`\\b${escapeRe(kw)}\\b`).test(p));
+    (routes[ch] || []).some((kw) => new RegExp(`\\b${escapeRe(kw)}\\b`, 'i').test(p));
   return recipe.ingredients.filter((i) => i.tag === 'always' || hit(i.tag));
 }
 

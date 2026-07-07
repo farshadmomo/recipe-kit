@@ -122,6 +122,20 @@ test('use aborts on circular extends with no partial install', () => {
   assert.ok(!fs.existsSync(path.join(dir, '.claude', 'recipes', 'active')));
 });
 
+test('use resolves diamond extends (not a false cycle)', () => {
+  const dir = tmpDir();
+  run(dir, 'init');
+  fs.writeFileSync(path.join(dir, 'c.md'), '---\nname: c\n---\n## [always] x\nbase body\n');
+  fs.writeFileSync(path.join(dir, 'a.md'), '---\nname: a\nextends: [./c.md]\n---\n## [ui] a\na body\n');
+  fs.writeFileSync(path.join(dir, 'b.md'), '---\nname: b\nextends: [./c.md]\n---\n## [stack] b\nb body\n');
+  fs.writeFileSync(path.join(dir, 'r.md'), '---\nname: r\nextends: [./a.md, ./b.md]\n---\n## [always] r\nr body\n');
+  run(dir, 'use', './r.md');
+  const flat = fs.readFileSync(path.join(dir, '.claude', 'recipes', 'r.md'), 'utf8');
+  assert.match(flat, /a body/);
+  assert.match(flat, /b body/);
+  assert.match(flat, /r body/);
+});
+
 test('use rejects a malformed gh ref before any network call', () => {
   assert.throws(() => run(tmpDir(), 'use', 'gh:justauser'), /bad ref/i);
 });

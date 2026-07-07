@@ -70,6 +70,7 @@ async function resolveRecipe(ref, baseDir, seen) {
     const parent = await resolveRecipe(parentRef, nextBase, seen);
     acc = acc ? mergeRecipes(acc, parent) : parent;
   }
+  seen.delete(key); // path-based cycle check: keep only the current ancestor chain, so diamonds resolve
   return acc ? mergeRecipes(acc, recipe) : recipe;
 }
 

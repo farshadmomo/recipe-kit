@@ -68,6 +68,7 @@ function serializeRecipe({ meta, ingredients }) {
   for (const key of ['version', 'author', 'description']) {
     if (meta[key]) lines.push(`${key}: ${meta[key]}`);
   }
+  if (meta.extends && meta.extends.length) lines.push(`extends: [${meta.extends.join(', ')}]`);
   const routes = Object.entries(meta.routes || {});
   if (routes.length) {
     lines.push('routes:');

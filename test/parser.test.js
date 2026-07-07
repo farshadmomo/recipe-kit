@@ -1,7 +1,7 @@
 'use strict';
 const test = require('node:test');
 const assert = require('node:assert');
-const { parseRecipe } = require('../src/parser');
+const { parseRecipe, mergeRecipes, serializeRecipe } = require('../src/parser');
 
 const GOOD = `---
 name: modern-ecom
@@ -71,8 +71,6 @@ test('throws when no ingredients', () => {
   assert.throws(() => parseRecipe('---\nname: x\n---\njust prose\n'), /no ingredients/);
 });
 
-const { mergeRecipes, serializeRecipe } = require('../src/parser');
-
 test('mergeRecipes: child overrides same-named ingredient, keeps parent order', () => {
   const parent = parseRecipe('---\nname: base\nauthor: alice\n---\n## [always] responses\nparent resp\n\n## [ui] design\nparent design\n');
   const child = parseRecipe('---\nname: kid\nextends: [./base.md]\nroutes:\n  ui: [widget]\n---\n## [ui] design\nchild design\n\n## [stack] tech\nnext.js\n');
@@ -92,4 +90,11 @@ test('serializeRecipe round-trips through parseRecipe', () => {
   const r = parseRecipe(GOOD);
   const again = parseRecipe(serializeRecipe(r));
   assert.deepEqual(again, r);
+});
+
+test('serializeRecipe preserves non-empty extends on round trip', () => {
+  const r = parseRecipe(GOOD.replace('extends: []', 'extends: [gh:a/base, ./local.md]'));
+  const again = parseRecipe(serializeRecipe(r));
+  assert.deepEqual(again, r);
+  assert.deepEqual(again.meta.extends, ['gh:a/base', './local.md']);
 });

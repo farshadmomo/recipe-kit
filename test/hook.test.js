@@ -64,3 +64,10 @@ test('garbage stdin → silent, exit 0', () => {
   const out = execFileSync(process.execPath, [HOOK], { input: '%%%', encoding: 'utf8' });
   assert.equal(out, '');
 });
+
+test('non-object JSON stdin (null, string) → silent, exit 0', () => {
+  for (const input of ['null', '"a string"']) {
+    const out = execFileSync(process.execPath, [HOOK], { input, encoding: 'utf8' });
+    assert.equal(out, '');
+  }
+});

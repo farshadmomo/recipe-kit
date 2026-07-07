@@ -27,6 +27,7 @@ function main() {
   } catch {
     return; // fail open: bad/missing stdin
   }
+  if (typeof payload !== 'object' || payload === null) return; // fail open: valid JSON, wrong shape
   const cwd = payload.cwd || process.cwd();
   const file = activeRecipeFile(cwd);
   if (!file || !fs.existsSync(file)) return;

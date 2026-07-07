@@ -67,3 +67,8 @@ function assertFails(fn, stderrRe) {
 test('unknown command prints usage and exits 1', () => {
   assertFails(() => run(tmpDir(), 'bogus'));
 });
+
+test('bare invocation prints usage and exits 0', () => {
+  const out = run(tmpDir()); // execFileSync throws on nonzero exit
+  assert.match(out, /usage: recipe/);
+});

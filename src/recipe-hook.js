@@ -53,4 +53,6 @@ function main() {
   if (out) process.stdout.write(out);
 }
 
-main();
+if (require.main === module) main();
+
+module.exports = { activeRecipeFile };

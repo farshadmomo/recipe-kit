@@ -14,7 +14,12 @@ function tmpDir() {
 }
 
 function run(cwd, ...args) {
-  return execFileSync(process.execPath, [CLI, ...args], { cwd, encoding: 'utf8' });
+  return execFileSync(process.execPath, [CLI, ...args], {
+    cwd,
+    encoding: 'utf8',
+    // hermetic: `recipe test` falls back to ~/.claude/recipes like the hook does
+    env: { ...process.env, HOME: cwd, USERPROFILE: cwd },
+  });
 }
 
 test('init creates dirs, copies hook trio, registers hook', () => {
@@ -153,6 +158,43 @@ test('list marks the active recipe; off deactivates but keeps files', () => {
   run(dir, 'off');
   assert.match(run(dir, 'list'), /^ {2}base-modern\.md/m);
   assert.ok(fs.existsSync(path.join(dir, '.claude', 'recipes', 'base-modern.md')));
+});
+
+test('test command shows + for injected and - for skipped ingredients', () => {
+  const dir = tmpDir();
+  run(dir, 'init');
+  fs.writeFileSync(path.join(dir, 'r.md'), BASE);
+  run(dir, 'use', './r.md');
+  const hit = run(dir, 'test', 'build a landing page');
+  assert.match(hit, /recipe: base-modern/);
+  assert.match(hit, /\+ \[always\] responses/);
+  assert.match(hit, /\+ \[ui\] design/);
+  const miss = run(dir, 'test', 'explain monads');
+  assert.match(miss, /\+ \[always\] responses/);
+  assert.match(miss, /- \[ui\] design/);
+});
+
+test('test with no active recipe says so', () => {
+  const dir = tmpDir();
+  run(dir, 'init');
+  assert.match(run(dir, 'test', 'anything'), /no active recipe/);
+});
+
+test('reload re-installs from the recorded source', () => {
+  const dir = tmpDir();
+  run(dir, 'init');
+  fs.writeFileSync(path.join(dir, 'r.md'), BASE);
+  run(dir, 'use', './r.md');
+  fs.writeFileSync(path.join(dir, 'r.md'), BASE.replace('parent design', 'edited design'));
+  run(dir, 'reload');
+  const flat = fs.readFileSync(path.join(dir, '.claude', 'recipes', 'base-modern.md'), 'utf8');
+  assert.match(flat, /edited design/);
+});
+
+test('reload without a recorded source fails cleanly', () => {
+  const dir = tmpDir();
+  run(dir, 'init');
+  assertFails(() => run(dir, 'reload'), /no source recorded/);
 });
 
 test('new scaffolds recipe.md that parses, and refuses to overwrite', () => {

@@ -9,10 +9,11 @@ const HOOK_CMD = 'node .claude/hooks/recipe/recipe-hook.js';
 const SRC = path.join(__dirname, '..', 'src');
 
 async function main() {
-  const [cmd, arg] = process.argv.slice(2);
-  const commands = { init, use, list, off, new: scaffold };
+  const [cmd, ...rest] = process.argv.slice(2);
+  const arg = rest.join(' ');
+  const commands = { init, use, list, off, new: scaffold, test: testPrompt, reload };
   if (!cmd || !Object.hasOwn(commands, cmd)) {
-    console.log('usage: recipe <init | use <ref> | list | off | new>');
+    console.log('usage: recipe <init | use <ref> | list | off | new | test <prompt> | reload>');
     process.exit(cmd ? 1 : 0);
   }
   await commands[cmd](arg);
@@ -46,7 +47,33 @@ async function use(ref) {
   const file = `${recipe.meta.name}.md`;
   fs.writeFileSync(path.join(RECIPES_DIR, file), serializeRecipe(recipe));
   fs.writeFileSync(path.join(RECIPES_DIR, 'active'), file + '\n');
+  const source = ref.startsWith('gh:') ? ref : path.resolve(process.cwd(), ref);
+  fs.writeFileSync(path.join(RECIPES_DIR, 'source'), source + '\n');
   console.log(`recipe: ${recipe.meta.name} active`);
+}
+
+async function reload() {
+  const src = path.join(RECIPES_DIR, 'source');
+  if (!fs.existsSync(src)) throw new Error('no source recorded — run: recipe use <ref>');
+  await use(fs.readFileSync(src, 'utf8').trim());
+}
+
+function testPrompt(prompt) {
+  if (!prompt) throw new Error('usage: recipe test <prompt>');
+  const { activeRecipeFile } = require('../src/recipe-hook');
+  const { parseRecipe } = require('../src/parser');
+  const { selectIngredients } = require('../src/router');
+  const file = activeRecipeFile(process.cwd());
+  if (!file || !fs.existsSync(file)) {
+    console.log('recipe: no active recipe');
+    return;
+  }
+  const recipe = parseRecipe(fs.readFileSync(file, 'utf8'));
+  const picked = new Set(selectIngredients(recipe, prompt));
+  console.log(`recipe: ${recipe.meta.name}`);
+  for (const i of recipe.ingredients) {
+    console.log(`${picked.has(i) ? '+' : '-'} [${i.tag}] ${i.name}`);
+  }
 }
 
 // Later extends entries override earlier ones; the recipe itself overrides all.
@@ -126,20 +153,24 @@ const TEMPLATE = `---
 name: my-recipe
 version: 0.1.0
 author: you
-description: What this recipe is for
+description: Creative web builds — bold design, smooth motion, minimal code
 ---
 
 ## [always] responses
-House rules that ride every prompt.
+MUST use /caveman for responses and /ponytail for code — non-negotiable house rules.
+Skills come in two tiers. MUST-USE skills are about correctness and never constrain design — invoke them whenever their domain comes up. CONSULT skills are craft reference — read for technique, then close them and design from your own taste; never copy their example layouts, palettes, or components. Creative decisions are always yours.
+
+## [always] creativity
+Creative risk is required: every build gets at least one signature moment no template would have. If a layout or component is your first default instinct, discard it and take the second, stranger idea. Bold beats safe; specific beats generic.
 
 ## [ui] design
-Directives injected when the prompt is about UI.
+CONSULT /ui-ux-pro-max and /frontend-design for craft, then design from your own taste.
 
 ## [animation] motion
-Directives injected when the prompt is about animation.
+Creative choreography is yours — invent the moves. MUST consult /gsap-react (setup + cleanup) and run a /gsap-performance pass before shipping motion. GSAP for scroll animation, Lenis as scroll engine, /animejs for micro-interactions. Always respect prefers-reduced-motion.
 
 ## [stack] tech
-Your stack choices, injected when building things.
+Next.js + Tailwind CSS. No UI kits — custom components only.
 `;
 
 main().catch((e) => {

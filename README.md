@@ -30,18 +30,21 @@ recipe use ./recipe.md # activate it
 recipe test "build a hero section"   # see what would inject
 ```
 
-Or use someone else's taste (the repo must be **public** — see Limitations):
+The recipe is yours to write — `recipe new` gives you a starting structure,
+not a style. Or borrow someone else's taste from any public repo with a
+`recipe.md` at its root (or a path to one):
 
 ```bash
-recipe use gh:farshadmomo/recipe-kit
+recipe use gh:someuser/their-repo                        # their root recipe.md
+recipe use gh:farshadmomo/recipe-kit/recipes/coffee.md   # an example from below
 ```
 
-## Cookbook
+## Cookbook (examples)
 
-This repo doubles as a cookbook. The root `recipe.md` is a specialty-coffee
-site (the default `gh:` target above); `recipes/` holds ten more concepts,
-each a complete house style — own vibe, banned defaults, motion identity, and
-`requires:` block:
+recipe-kit is the tool; these are just proof of range. `recipes/` holds
+eleven complete house styles — each with its own vibe, banned defaults,
+motion identity, and `requires:` block. Use one as-is, or copy one, gut it,
+and make it yours:
 
 ```bash
 recipe use gh:farshadmomo/recipe-kit/recipes/festival.md
@@ -49,6 +52,7 @@ recipe use gh:farshadmomo/recipe-kit/recipes/festival.md
 
 | recipe            | concept                                                            |
 | ----------------- | ------------------------------------------------------------------ |
+| `coffee.md`       | specialty coffee shop — warm minimalism, editorial type, tactile motion |
 | `festival.md`     | music festival — rave-poster maximalism, lineup walls, ticket drops |
 | `cinema.md`       | arthouse cinema — filmic dark, credits-roll type, program not grid  |
 | `music-player.md` | player web app — hardware warmth, waveform hero, springy controls   |

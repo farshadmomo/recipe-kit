@@ -16,12 +16,8 @@ opinionated prompt you would have written by hand, every time, automatically.
 
 ## Quick start
 
-Not published to npm yet. Clone this repo, then make the `recipe` command
-available globally:
-
 ```bash
-git clone https://github.com/farshadmomo/recipe-kit
-cd recipe-kit && npm link
+npm install -g recipe-kit
 ```
 
 Then, in any project:
@@ -179,7 +175,9 @@ Hard-won from dogfooding:
 ## Development
 
 ```bash
-node --test    # 52 tests, zero dependencies
+git clone https://github.com/farshadmomo/recipe-kit
+cd recipe-kit && npm link   # makes `recipe` point at your working copy
+node --test                 # 52 tests, zero dependencies
 ```
 
 Zero runtime and dev dependencies. Node ≥18, CommonJS. Design notes and the

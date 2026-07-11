@@ -7,7 +7,7 @@ const os = require('node:os');
 const path = require('node:path');
 
 const CLI = path.join(__dirname, '..', 'bin', 'recipe.js');
-const HOOK_CMD = 'node .claude/hooks/recipe/recipe-hook.js';
+const HOOK_CMD = 'node "${CLAUDE_PROJECT_DIR:-.}/.claude/hooks/recipe/recipe-hook.js"';
 
 function tmpDir() {
   return fs.mkdtempSync(path.join(os.tmpdir(), 'recipe-cli-'));
@@ -55,6 +55,30 @@ test('init is idempotent and preserves existing settings', () => {
     e.hooks.map((h) => h.command)
   );
   assert.deepEqual(cmds, [HOOK_CMD]);
+});
+
+test('init migrates an old-format hook command', () => {
+  const dir = tmpDir();
+  fs.mkdirSync(path.join(dir, '.claude'), { recursive: true });
+  fs.writeFileSync(
+    path.join(dir, '.claude', 'settings.json'),
+    JSON.stringify({
+      hooks: {
+        UserPromptSubmit: [
+          { hooks: [{ type: 'command', command: 'node .claude/hooks/recipe/recipe-hook.js' }] },
+          { hooks: [{ type: 'command', command: 'echo hi' }] },
+        ],
+      },
+    })
+  );
+  run(dir, 'init');
+  const settings = JSON.parse(
+    fs.readFileSync(path.join(dir, '.claude', 'settings.json'), 'utf8')
+  );
+  const cmds = settings.hooks.UserPromptSubmit.flatMap((e) =>
+    e.hooks.map((h) => h.command)
+  );
+  assert.deepEqual(cmds, ['echo hi', HOOK_CMD]);
 });
 
 // execFileSync throws on nonzero exit; CLI output lands on e.stdout/e.stderr,

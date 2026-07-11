@@ -3,8 +3,6 @@
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
-const { parseRecipe } = require('./parser');
-const { DEFAULT_ROUTES, selectIngredients, renderContext } = require('./router');
 
 function activeRecipeFile(cwd) {
   const dirs = [
@@ -21,6 +19,14 @@ function activeRecipeFile(cwd) {
 }
 
 function main() {
+  let parseRecipe, DEFAULT_ROUTES, selectIngredients, renderContext;
+  try {
+    ({ parseRecipe } = require('./parser'));
+    ({ DEFAULT_ROUTES, selectIngredients, renderContext } = require('./router'));
+  } catch {
+    return; // fail open: hook siblings missing/corrupt must never block a prompt
+  }
+
   let payload;
   try {
     payload = JSON.parse(fs.readFileSync(0, 'utf8'));
@@ -28,7 +34,7 @@ function main() {
     return; // fail open: bad/missing stdin
   }
   if (typeof payload !== 'object' || payload === null) return; // fail open: valid JSON, wrong shape
-  const cwd = payload.cwd || process.cwd();
+  const cwd = process.env.CLAUDE_PROJECT_DIR || payload.cwd || process.cwd();
   const file = activeRecipeFile(cwd);
   if (!file || !fs.existsSync(file)) return;
 

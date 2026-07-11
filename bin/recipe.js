@@ -5,7 +5,7 @@ const path = require('path');
 
 const RECIPES_DIR = path.join('.claude', 'recipes');
 const HOOK_DIR = path.join('.claude', 'hooks', 'recipe');
-const HOOK_CMD = 'node .claude/hooks/recipe/recipe-hook.js';
+const HOOK_CMD = 'node "${CLAUDE_PROJECT_DIR:-.}/.claude/hooks/recipe/recipe-hook.js"';
 const SRC = path.join(__dirname, '..', 'src');
 
 async function main() {
@@ -30,7 +30,16 @@ function init() {
     ? JSON.parse(fs.readFileSync(settingsPath, 'utf8'))
     : {};
   settings.hooks = settings.hooks || {};
-  const entries = (settings.hooks.UserPromptSubmit = settings.hooks.UserPromptSubmit || []);
+  settings.hooks.UserPromptSubmit = settings.hooks.UserPromptSubmit || [];
+  // migrate stale installs: drop old-format recipe hook commands, keep everything else
+  for (const e of settings.hooks.UserPromptSubmit) {
+    e.hooks = (e.hooks || []).filter(
+      (h) => !(String(h.command || '').includes('.claude/hooks/recipe/recipe-hook.js') && h.command !== HOOK_CMD)
+    );
+  }
+  const entries = (settings.hooks.UserPromptSubmit = settings.hooks.UserPromptSubmit.filter(
+    (e) => e.hooks.length > 0
+  ));
   const installed = entries.some((e) =>
     (e.hooks || []).some((h) => h.command === HOOK_CMD)
   );
@@ -158,7 +167,7 @@ description: Creative web builds — bold design, smooth motion, minimal code
 
 ## [always] responses
 MUST use /caveman for responses and /ponytail for code — non-negotiable house rules.
-Skills come in two tiers. MUST-USE skills are about correctness and never constrain design — invoke them whenever their domain comes up. CONSULT skills are craft reference — read for technique, then close them and design from your own taste; never copy their example layouts, palettes, or components. Creative decisions are always yours.
+Skills come in two tiers. MUST-USE skills are about correctness and never constrain design — invoke them whenever their domain comes up. CONSULT skills are craft reference — read for technique, then close them and design from your own taste; never copy their example layouts, palettes, or components. Creative decisions are always yours. MUST-USE is a checklist, not an autopilot: invoke a skill when its domain genuinely comes up, scaled to the task — satisfy the intent, skip the ceremony.
 
 ## [always] creativity
 Creative risk is required: every build gets at least one signature moment no template would have. If a layout or component is your first default instinct, discard it and take the second, stranger idea. Bold beats safe; specific beats generic.

@@ -120,6 +120,15 @@ Hard-won from dogfooding:
   them and design from your own taste; never copy their example layouts or
   palettes. Blanket mandates produce compliance, and compliance kills taste.
   Keep "MUST" only where being wrong is expensive.
+- **A recipe is a checklist, not an autopilot.** Tell the AI to scale mandated
+  skills to the task — "satisfy the intent, skip the ceremony." A dogfood
+  build reported that obeying mandates literally (a full SEO audit for a
+  two-section page) would have been pure waste, while the intent (correct
+  schema) was cheap to satisfy.
+- **Name the traps out loud.** Explicit bans ("no card grid for products, no
+  glass cards, no purple") outperform positive direction — a dogfood build
+  reported the bans were what actually killed the templated defaults it would
+  otherwise have shipped.
 - **Ask for creative risk explicitly.** An AI's first instinct is the
   statistically most likely design. An `[always] creativity` ingredient that
   demands one signature moment per build, and says "discard your first-instinct
@@ -139,6 +148,10 @@ Hard-won from dogfooding:
   ingredients fire for it.
 - **One recipe is active at a time.** Project `.claude/recipes/` beats global
   `~/.claude/recipes/`.
+- **Hook error mentioning `cjs/loader`?** The hook script wasn't found —
+  installs made before v0.2 registered a cwd-relative command that broke when
+  the session `cd`'d. Re-run `recipe init` to migrate to the
+  `${CLAUDE_PROJECT_DIR}` form.
 
 ## Limitations
 
@@ -152,7 +165,7 @@ Hard-won from dogfooding:
 ## Development
 
 ```bash
-node --test    # 43 tests, zero dependencies
+node --test    # 44 tests, zero dependencies
 ```
 
 Zero runtime and dev dependencies. Node ≥18, CommonJS. Design notes and the

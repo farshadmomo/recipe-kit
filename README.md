@@ -36,6 +36,30 @@ Or use someone else's taste (the repo must be **public** — see Limitations):
 recipe use gh:farshadmomo/recipe-kit
 ```
 
+## Cookbook
+
+This repo doubles as a cookbook. The root `recipe.md` is a specialty-coffee
+site (the default `gh:` target above); `recipes/` holds ten more concepts,
+each a complete house style — own vibe, banned defaults, motion identity, and
+`requires:` block:
+
+```bash
+recipe use gh:farshadmomo/recipe-kit/recipes/festival.md
+```
+
+| recipe            | concept                                                            |
+| ----------------- | ------------------------------------------------------------------ |
+| `festival.md`     | music festival — rave-poster maximalism, lineup walls, ticket drops |
+| `cinema.md`       | arthouse cinema — filmic dark, credits-roll type, program not grid  |
+| `music-player.md` | player web app — hardware warmth, waveform hero, springy controls   |
+| `streetwear.md`   | streetwear drops — brutalist lookbook, garment-tag type, honest scarcity |
+| `portfolio.md`    | dev/designer portfolio — quiet confidence, case-study narratives    |
+| `arcade.md`       | arcade / game studio — CRT phosphor, game-feel juice, easter egg    |
+| `museum.md`       | digital museum — archival elegance, plaque type, 3D artifact viewer |
+| `devtool.md`      | dev-tool SaaS — terminal-honest, real output, benchmarks over adjectives |
+| `bookstore.md`    | indie bookshop — literary print, covers as objects, margin notes    |
+| `planetarium.md`  | planetarium — deep-space dark, shader starfield, wonder with units  |
+
 ## Recipe format
 
 ```markdown

@@ -22,6 +22,14 @@ function run(cwd, ...args) {
   });
 }
 
+function runWithEnv(cwd, extraEnv, ...args) {
+  return execFileSync(process.execPath, [CLI, ...args], {
+    cwd,
+    encoding: 'utf8',
+    env: { ...process.env, HOME: cwd, USERPROFILE: cwd, ...extraEnv },
+  });
+}
+
 test('init creates dirs, copies hook trio, registers hook', () => {
   const dir = tmpDir();
   run(dir, 'init');
@@ -229,4 +237,47 @@ test('new scaffolds recipe.md that parses, and refuses to overwrite', () => {
   assert.ok(r.meta.name);
   assert.ok(r.ingredients.some((i) => i.tag === 'always'));
   assert.throws(() => run(dir, 'new'), /already exists/);
+});
+
+const NEEDS_SKILL = `---
+name: needs-skills
+requires:
+  caveman: node -e "require('fs').writeFileSync('MARKER.txt','done')"
+---
+
+## [always] a
+body
+`;
+
+test('use warns on missing required skill, stays quiet once RECIPE_SKILLS_DIRS has it', () => {
+  const dir = tmpDir();
+  run(dir, 'init');
+  fs.writeFileSync(path.join(dir, 'r.md'), NEEDS_SKILL);
+  const skillsDir = fs.mkdtempSync(path.join(os.tmpdir(), 'recipe-skills-'));
+
+  const missing = runWithEnv(dir, { RECIPE_SKILLS_DIRS: skillsDir }, 'use', './r.md');
+  assert.match(missing, /⚠ 1 required skill\(s\) not installed: caveman/);
+  assert.match(missing, /run: recipe setup/);
+
+  fs.mkdirSync(path.join(skillsDir, 'caveman'), { recursive: true });
+  fs.writeFileSync(path.join(skillsDir, 'caveman', 'SKILL.md'), '# caveman');
+  const present = runWithEnv(dir, { RECIPE_SKILLS_DIRS: skillsDir }, 'use', './r.md');
+  assert.doesNotMatch(present, /required skill/);
+});
+
+test('setup without --yes lists install commands but does not execute them', () => {
+  const dir = tmpDir();
+  run(dir, 'init');
+  fs.writeFileSync(path.join(dir, 'r.md'), NEEDS_SKILL);
+  run(dir, 'use', './r.md');
+  const out = run(dir, 'setup');
+  assert.match(out, /caveman/);
+  assert.match(out, /re-run with --yes/);
+  assert.ok(!fs.existsSync(path.join(dir, 'MARKER.txt')));
+});
+
+test('setup with no active recipe says so', () => {
+  const dir = tmpDir();
+  run(dir, 'init');
+  assert.match(run(dir, 'setup'), /no active recipe/);
 });

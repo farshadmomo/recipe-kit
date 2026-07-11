@@ -1,6 +1,6 @@
 # recipe-kit
 
-Skills give your AI *capabilities*. A **recipe** gives it *taste*.
+Skills give your AI _capabilities_. A **recipe** gives it _taste_.
 
 A recipe is one markdown file of house style — which skills to use, which
 stack, how to respond — injected automatically into every Claude Code prompt.
@@ -11,7 +11,7 @@ Today you write:
 
 > Build me a modern ecommerce website
 
-With a recipe active, the AI receives that *plus* your house style — the
+With a recipe active, the AI receives that _plus_ your house style — the
 opinionated prompt you would have written by hand, every time, automatically.
 
 ## Quick start
@@ -48,28 +48,35 @@ name: modern-ecom
 version: 1.0.0
 author: momtaz
 description: Modern ecommerce builds, heavy motion, minimal code
-extends: []          # optional: layer on top of other recipes
-routes:              # optional: override or add channel keywords
+extends: [] # optional: layer on top of other recipes
+routes: # optional: override or add channel keywords
   animation: [animate, scroll, motion, hover, parallax]
   threed: [3d, three, webgl, shader, scene]
+requires: # optional: skills this recipe leans on → install commands
+  gsap-performance: npx skills add greensock/gsap-skills@gsap-performance
 ---
 
 ## [always] responses
+
 MUST use /caveman for responses and /ponytail for code.
 
 ## [ui] design
+
 CONSULT /ui-ux-pro-max and /frontend-design for craft, then design from
 your own taste.
 
 ## [animation] motion
+
 MUST run /gsap-performance before shipping motion. GSAP for scroll,
 Lenis as scroll engine — the choreography itself is yours.
 
 ## [threed] scene
+
 MUST use /threejs-loaders for any model/texture loading. The scene concept
 is yours.
 
 ## [stack] tech
+
 Next.js + Tailwind CSS. No other CSS frameworks.
 ```
 
@@ -85,18 +92,22 @@ Next.js + Tailwind CSS. No other CSS frameworks.
   Resolved and flattened at install time — share a 5-line overlay instead of a
   full copy. Diamonds resolve; true cycles abort. A repo with several recipes
   is a **cookbook**.
+- `requires`: skills this recipe's ingredients mention by name, mapped to
+  their install command. `recipe use` warns when any are missing; `recipe
+  setup` lists and (with `--yes`) installs them.
 
 ## Commands
 
-| Command | What it does |
-|---|---|
-| `recipe init` | Install the hook + `.claude/recipes/` (idempotent) |
-| `recipe use <gh:user/repo[/path] \| ./file.md>` | Install + activate a recipe |
-| `recipe list` | Show installed recipes (`*` = active) |
-| `recipe off` | Deactivate (keeps files) |
-| `recipe new` | Scaffold a starter `recipe.md` (creative-web defaults) |
-| `recipe test <prompt>` | Show which ingredients would inject for a prompt (`+`/`-` per ingredient) |
-| `recipe reload` | Re-install the active recipe from its recorded source after edits |
+| Command                                         | What it does                                                              |
+| ----------------------------------------------- | ------------------------------------------------------------------------- |
+| `recipe init`                                   | Install the hook + `.claude/recipes/` (idempotent)                        |
+| `recipe use <gh:user/repo[/path] \| ./file.md>` | Install + activate a recipe                                               |
+| `recipe list`                                   | Show installed recipes (`*` = active)                                     |
+| `recipe off`                                    | Deactivate (keeps files)                                                  |
+| `recipe new`                                    | Scaffold a starter `recipe.md` (creative-web defaults)                    |
+| `recipe test <prompt>`                          | Show which ingredients would inject for a prompt (`+`/`-` per ingredient) |
+| `recipe reload`                                 | Re-install the active recipe from its recorded source after edits         |
+| `recipe setup [--yes]`                          | List required skills that aren't installed; `--yes` runs their install commands |
 
 ## How it works
 
@@ -107,7 +118,7 @@ ingredients wrapped in `<recipe name="...">…</recipe>`. No LLM call, no
 network, fails open — a broken recipe never blocks a prompt.
 
 Frontmatter is a YAML subset: `key: value`, `key: [flow, lists]`, and
-one-level nested maps of flow lists.
+one-level nested maps of flow lists or scalars.
 
 ## Writing a good recipe
 
@@ -142,7 +153,7 @@ Hard-won from dogfooding:
 ## Gotchas
 
 - **`recipe use` installs a snapshot.** Editing your source `recipe.md` does
-  *not* update the active copy — run `recipe reload` after every edit.
+  _not_ update the active copy — run `recipe reload` after every edit.
 - **Verify what's active before judging results.** `recipe list` shows `*`
   beside the active recipe; `recipe test "your prompt"` shows exactly which
   ingredients fire for it.
@@ -161,11 +172,14 @@ Hard-won from dogfooding:
   never says "scroll" or "animate" won't pull the animation channel, however
   animated the result should be.
 - Flow-list values can't contain commas.
+- A recipe references skills but doesn't ship them. Declare them under
+  `requires:` so users get warned; without it, skill mandates silently no-op
+  for anyone missing the skill.
 
 ## Development
 
 ```bash
-node --test    # 44 tests, zero dependencies
+node --test    # 52 tests, zero dependencies
 ```
 
 Zero runtime and dev dependencies. Node ≥18, CommonJS. Design notes and the

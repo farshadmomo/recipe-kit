@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 'use strict';
 const fs = require('fs');
+const os = require('os');
 const path = require('path');
 
 const RECIPES_DIR = path.join('.claude', 'recipes');
@@ -11,9 +12,9 @@ const SRC = path.join(__dirname, '..', 'src');
 async function main() {
   const [cmd, ...rest] = process.argv.slice(2);
   const arg = rest.join(' ');
-  const commands = { init, use, list, off, new: scaffold, test: testPrompt, reload };
+  const commands = { init, use, list, off, new: scaffold, test: testPrompt, reload, setup };
   if (!cmd || !Object.hasOwn(commands, cmd)) {
-    console.log('usage: recipe <init | use <ref> | list | off | new | test <prompt> | reload>');
+    console.log('usage: recipe <init | use <ref> | list | off | new | test <prompt> | reload | setup [--yes]>');
     process.exit(cmd ? 1 : 0);
   }
   await commands[cmd](arg);
@@ -59,6 +60,80 @@ async function use(ref) {
   const source = ref.startsWith('gh:') ? ref : path.resolve(process.cwd(), ref);
   fs.writeFileSync(path.join(RECIPES_DIR, 'source'), source + '\n');
   console.log(`recipe: ${recipe.meta.name} active`);
+  const missing = missingSkills(recipe.meta.requires || {});
+  if (missing.length) {
+    console.log(`⚠ ${missing.length} required skill(s) not installed: ${missing.map(([n]) => n).join(', ')}`);
+    console.log('  run: recipe setup');
+  }
+}
+
+// installed if SKILL.md exists directly, or as an installed plugin's skill.
+function skillInstalled(name) {
+  if (process.env.RECIPE_SKILLS_DIRS) {
+    return process.env.RECIPE_SKILLS_DIRS.split(path.delimiter)
+      .some((dir) => fs.existsSync(path.join(dir, name, 'SKILL.md')));
+  }
+  const roots = [
+    path.join('.claude', 'skills', name),
+    path.join(os.homedir(), '.claude', 'skills', name),
+  ];
+  if (roots.some((r) => fs.existsSync(path.join(r, 'SKILL.md')))) return true;
+  try {
+    // cache layout: <marketplace>/<plugin>/<version>/skills/<name>/SKILL.md
+    const cacheDir = path.join(os.homedir(), '.claude', 'plugins', 'cache');
+    for (const marketplace of fs.readdirSync(cacheDir, { withFileTypes: true })) {
+      if (!marketplace.isDirectory()) continue;
+      const mpDir = path.join(cacheDir, marketplace.name);
+      for (const plugin of fs.readdirSync(mpDir, { withFileTypes: true })) {
+        if (!plugin.isDirectory()) continue;
+        const pluginDir = path.join(mpDir, plugin.name);
+        for (const version of fs.readdirSync(pluginDir, { withFileTypes: true })) {
+          if (!version.isDirectory()) continue;
+          // some plugins keep skills under skills/, others under .claude/skills/
+          for (const sub of ['skills', path.join('.claude', 'skills')]) {
+            if (fs.existsSync(path.join(pluginDir, version.name, sub, name, 'SKILL.md'))) return true;
+          }
+        }
+      }
+    }
+  } catch {} // missing/unreadable plugin cache is not an error
+  return false;
+}
+
+function missingSkills(requires) {
+  return Object.entries(requires).filter(([name]) => !skillInstalled(name));
+}
+
+function setup(arg) {
+  const { activeRecipeFile } = require('../src/recipe-hook');
+  const { parseRecipe } = require('../src/parser');
+  const file = activeRecipeFile(process.cwd());
+  if (!file || !fs.existsSync(file)) {
+    console.log('recipe: no active recipe');
+    return;
+  }
+  const recipe = parseRecipe(fs.readFileSync(file, 'utf8'));
+  const missing = missingSkills(recipe.meta.requires || {});
+  if (!missing.length) {
+    console.log('recipe: all required skills installed');
+    return;
+  }
+  for (const [name, cmd] of missing) console.log(`  ${name}  →  ${cmd}`);
+  if (arg !== '--yes') {
+    console.log('re-run with --yes to execute these commands');
+    return;
+  }
+  // commands come straight from the recipe file — always printed before
+  // execution so the user sees exactly what runs (consent surface).
+  for (const [name, cmd] of missing) {
+    console.log(`recipe: installing ${name}: ${cmd}`);
+    try {
+      require('child_process').execSync(cmd, { stdio: 'inherit', shell: true });
+    } catch {
+      console.log(`recipe: install failed for ${name} — stopping`);
+      process.exit(1);
+    }
+  }
 }
 
 async function reload() {
@@ -163,6 +238,8 @@ name: my-recipe
 version: 0.1.0
 author: you
 description: Creative web builds — bold design, smooth motion, minimal code
+# requires:            # optional: skills this recipe leans on → install commands
+#   caveman: <install command>
 ---
 
 ## [always] responses

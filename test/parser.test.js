@@ -106,3 +106,54 @@ test('serializeRecipe preserves non-empty extends on round trip', () => {
   assert.deepEqual(again, r);
   assert.deepEqual(again.meta.extends, ['gh:a/base', './local.md']);
 });
+
+const WITH_REQUIRES = GOOD.replace(
+  'routes:\n  animation: [animate, scroll, parallax]\n',
+  'routes:\n  animation: [animate, scroll, parallax]\nrequires:\n  caveman: npx skills add caveman\n  seo: claude plugin marketplace add foo/bar && claude plugin install claude-seo@bar\n  docs: see https://example.com/skill for setup\n'
+);
+
+test('parses requires: nested scalars, values with spaces/&&/a colon-bearing URL', () => {
+  const r = parseRecipe(WITH_REQUIRES);
+  assert.deepEqual(r.meta.requires, {
+    caveman: 'npx skills add caveman',
+    seo: 'claude plugin marketplace add foo/bar && claude plugin install claude-seo@bar',
+    docs: 'see https://example.com/skill for setup',
+  });
+});
+
+test('routes flow lists still parse when a requires map is also present', () => {
+  const r = parseRecipe(WITH_REQUIRES);
+  assert.deepEqual(r.meta.routes, { animation: ['animate', 'scroll', 'parallax'] });
+});
+
+test('ignores comment lines in frontmatter, top-level and indented', () => {
+  const withComments = `---
+name: x
+# a top-level comment
+requires:
+  # an indented comment
+  caveman: npx skills add caveman
+---
+## [always] a
+body
+`;
+  const r = parseRecipe(withComments);
+  assert.deepEqual(r.meta.requires, { caveman: 'npx skills add caveman' });
+});
+
+test('serializeRecipe preserves requires on round trip', () => {
+  const r = parseRecipe(WITH_REQUIRES);
+  const again = parseRecipe(serializeRecipe(r));
+  assert.deepEqual(again, r);
+  assert.deepEqual(again.meta.requires, r.meta.requires);
+});
+
+test('mergeRecipes: child requires entry overrides parent, parent-only entries survive', () => {
+  const parent = parseRecipe('---\nname: base\nrequires:\n  caveman: npx skills add caveman\n  ponytail: npx skills add ponytail\n---\n## [always] a\nbody\n');
+  const child = parseRecipe('---\nname: kid\nextends: [./base.md]\nrequires:\n  caveman: newer install caveman\n---\n## [always] a\nbody\n');
+  const m = mergeRecipes(parent, child);
+  assert.deepEqual(m.meta.requires, {
+    caveman: 'newer install caveman',
+    ponytail: 'npx skills add ponytail',
+  });
+});

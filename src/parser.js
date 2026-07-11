@@ -1,15 +1,20 @@
 'use strict';
 
-// ponytail: YAML subset — scalars, [flow, lists], one-level maps of flow lists.
+// ponytail: YAML subset — scalars, [flow, lists], one-level maps of flow lists or scalars.
 // Swap in a real YAML lib only if recipes outgrow this.
 function parseFrontmatter(text) {
-  const meta = { extends: [], routes: {} };
+  const meta = { extends: [], routes: {}, requires: {} };
   let currentMap = null;
   for (const raw of text.split(/\r?\n/)) {
     if (!raw.trim()) continue;
     const nested = raw.match(/^\s+([\w-]+):\s*\[(.*)\]\s*$/);
     if (nested && currentMap) {
       meta[currentMap][nested[1]] = splitFlowList(nested[2]);
+      continue;
+    }
+    const nestedScalar = raw.match(/^\s+([\w-]+):\s*(.+)$/);
+    if (nestedScalar && currentMap) {
+      meta[currentMap][nestedScalar[1]] = nestedScalar[2].trim();
       continue;
     }
     const top = raw.match(/^([\w-]+):\s*(.*)$/);
@@ -59,6 +64,7 @@ function mergeRecipes(parent, child) {
     ...child.meta,
     extends: [],
     routes: { ...parent.meta.routes, ...child.meta.routes },
+    requires: { ...(parent.meta.requires || {}), ...(child.meta.requires || {}) },
   };
   const byName = new Map(parent.ingredients.map((i) => [i.name, i]));
   for (const i of child.ingredients) byName.set(i.name, i);
@@ -75,6 +81,11 @@ function serializeRecipe({ meta, ingredients }) {
   if (routes.length) {
     lines.push('routes:');
     for (const [ch, kws] of routes) lines.push(`  ${ch}: [${kws.join(', ')}]`);
+  }
+  const requires = Object.entries(meta.requires || {});
+  if (requires.length) {
+    lines.push('requires:');
+    for (const [name, cmd] of requires) lines.push(`  ${name}: ${cmd}`);
   }
   lines.push('---', '');
   for (const i of ingredients) lines.push(`## [${i.tag}] ${i.name}`, '', i.body, '');

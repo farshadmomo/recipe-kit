@@ -26,7 +26,7 @@ requires:
 
 ## [always] responses
 MUST use /caveman for status updates and routine replies, /ponytail for code — smallest working diff, reuse before writing. When explaining design rationale, clarity outranks compression — drop caveman and answer plainly.
-Skills come in two tiers. MUST-USE (correctness): /gsap-react for GSAP setup + cleanup, a /gsap-performance pass before shipping motion, /threejs-loaders for any 3D asset, /seo for schema and meta. MUST-USE is a checklist, not an autopilot — invoke a skill when its domain genuinely comes up, scaled to the task. CONSULT (craft — creativity stays yours): /ui-ux-pro-max, /frontend-design, /impeccable, /gsap-scrolltrigger, /gsap-timeline, /gsap-plugins. Read for technique, then close them and design from your own taste — never copy their example layouts or palettes.
+Skills come in two tiers. MUST-USE (correctness): /gsap-react for GSAP setup + cleanup, a /gsap-performance pass before shipping GSAP-driven motion, /threejs-loaders for any 3D asset, /seo for schema and meta. MUST-USE is a checklist, not an autopilot — invoke a skill when its domain genuinely comes up, scaled to the task. CONSULT (craft — creativity stays yours): /ui-ux-pro-max, /frontend-design, /impeccable, /gsap-scrolltrigger, /gsap-timeline, /gsap-plugins. Read for technique, then close them and design from your own taste — never copy their example layouts or palettes.
 
 ## [always] vibe
 A portfolio whose confidence is in the restraint. One decisive base (near-white paper OR near-black — kickoff decides), one accent used like a signature, enormous whitespace, and typography doing the heavy lifting: a characterful grotesk at scale, serif italic only for asides. The work is the loudest thing on every page. Banned: "Hi, I'm X 👋" hero, skill progress bars, testimonial carousels, three-card services grid, stock "let's work together" gradients, tech-logo walls.
@@ -41,7 +41,7 @@ Project-start ritual — ONLY if DESIGN.md does not exist; skip once it does. Pr
 Use /ui-ux-pro-max and /frontend-design for craft; /impeccable pass on finished sections. Follow DESIGN.md. The index is a statement, not a menu: name treatment at absurd scale, work list as typographic entries with hover previews — no thumbnail card grid. Case studies read like narratives: problem, decisions, outcome, each with real artifacts (screens, sketches, metrics) in generous rhythm. After each section, run the generic-kill pass. Perfect focus states — this site gets inspected by people who notice.
 
 ## [animation] motion
-Choreography is yours — invent the moves. GSAP throughout. MUST: /gsap-react setup/cleanup, /gsap-performance before shipping — 60fps or cut it. CONSULT /gsap-scrolltrigger, /gsap-timeline, /gsap-plugins (SplitText-style reveals) for technique. Starters, not a list: page transitions that carry an element between routes, the name treatment that reacts to cursor, work entries whose preview follows the pointer with lag, headings that assemble on first scroll. Motion must feel authored, never installed. prefers-reduced-motion always.
+Choreography is yours — invent the moves. GSAP throughout. If GSAP earns its place over platform primitives: MUST /gsap-react setup/cleanup + a /gsap-performance pass before shipping — 60fps or cut it. CONSULT /gsap-scrolltrigger, /gsap-timeline, /gsap-plugins (SplitText-style reveals) for technique. Starters, not a list: page transitions that carry an element between routes, the name treatment that reacts to cursor, work entries whose preview follows the pointer with lag, headings that assemble on first scroll. Motion must feel authored, never installed. prefers-reduced-motion always.
 
 ## [threed] scene
 Only if the concept earns it — a small persistent signature (a generative mark that lives in the corner, a hero object with pointer physics) beats a big obligatory scene. Skipping 3D entirely is a valid identity. MUST /threejs-fundamentals for setup, /threejs-loaders for any asset. Lazy-load, static fallback.
@@ -50,7 +50,7 @@ Only if the concept earns it — a small persistent signature (a generative mark
 First person, plain, specific: "I design systems and then break their grids on purpose." Case studies state decisions and tradeoffs, not buzzwords. Bio is three sentences a human would say aloud. No "passionate", no "crafting digital experiences".
 
 ## [stack] tech
-Next.js (App Router) + Tailwind CSS. GSAP. React Three Fiber only if the signature lands. next/font, next/image, MDX for case studies. Fully static (SSG). Vercel. No UI kits.
+Next.js (App Router) + Tailwind CSS. GSAP. React Three Fiber only if the signature lands. next/font, next/image, MDX for case studies. Fully static (SSG). Vercel. No UI kits. Libraries are defaults, not dogma — platform primitives win whenever they hit the same result at 60fps; shipping fewer is the better build.
 
 ## [seo] search
 MUST use /seo scaled to the site: Person + CreativeWork JSON-LD, per-case-study meta + OG in the site's art direction, semantic headings under the theatrics. The work list must be crawlable text. Motion never blocks LCP.

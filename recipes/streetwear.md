@@ -25,7 +25,7 @@ requires:
 
 ## [always] responses
 MUST use /caveman for status updates and routine replies, /ponytail for code — smallest working diff, reuse before writing. When explaining design rationale, clarity outranks compression — drop caveman and answer plainly.
-Skills come in two tiers. MUST-USE (correctness): /ecommerce-kit for any cart, checkout, stock, or drop logic; /gsap-react for GSAP setup + cleanup; a /gsap-performance pass before shipping motion; /seo for schema and meta. MUST-USE is a checklist, not an autopilot — invoke a skill when its domain genuinely comes up, scaled to the task. CONSULT (craft — creativity stays yours): /ui-ux-pro-max, /frontend-design, /web-design, /impeccable, /gsap-scrolltrigger, /animejs. Read for technique, then close them and design from your own taste — never copy their example layouts or palettes.
+Skills come in two tiers. MUST-USE (correctness): /ecommerce-kit for any cart, checkout, stock, or drop logic; /gsap-react for GSAP setup + cleanup; a /gsap-performance pass before shipping GSAP-driven motion; /seo for schema and meta. MUST-USE is a checklist, not an autopilot — invoke a skill when its domain genuinely comes up, scaled to the task. CONSULT (craft — creativity stays yours): /ui-ux-pro-max, /frontend-design, /web-design, /impeccable, /gsap-scrolltrigger, /animejs. Read for technique, then close them and design from your own taste — never copy their example layouts or palettes.
 
 ## [always] vibe
 A streetwear brand that art-directs like a magazine and ships like a warehouse. Raw brutalist lookbook: oversized grotesk in tight stacks, off-grid photo placements that overlap on purpose, hard 1px borders, no border-radius anywhere. Monochrome base with ONE utility accent (safety orange or high-vis yellow). Product data displayed like garment tags — mono type, specs, fabric, care icons. Banned: Shopify-template product grid, SALE badges, hypebeast lightning-bolt emojis, fake urgency banners, more than one drop timer per page.
@@ -40,7 +40,7 @@ Project-start ritual — ONLY if DESIGN.md does not exist; skip once it does. Pr
 Use /ui-ux-pro-max, /frontend-design, and /web-design for craft; /impeccable pass on finished sections. Follow DESIGN.md. Lookbook as a drag-to-explore horizontal rail or an editorial spread — never a uniform grid. Product page reads like a spec sheet: huge image, garment-tag data block, size selector as flat typographic buttons with real disabled states for sold sizes. Cart is a drawer with the same tag typography. After each section, run the generic-kill pass. A11y: focus states on everything, size buttons keyboard-operable.
 
 ## [animation] motion
-Choreography is yours — invent the moves. GSAP for scroll, Anime.js for micro. MUST: /gsap-react setup/cleanup, /gsap-performance before shipping — 60fps or cut it. CONSULT /gsap-scrolltrigger and /animejs for technique. Starters, not a list: images that reveal with a hard clip-path wipe (no soft fades — this brand doesn't fade), marquee of the drop name, size buttons that snap on select, add-to-cart that stamps like a price gun. prefers-reduced-motion respected always.
+Choreography is yours — invent the moves. GSAP for scroll, Anime.js for micro. If GSAP earns its place over platform primitives: MUST /gsap-react setup/cleanup + a /gsap-performance pass before shipping — 60fps or cut it. CONSULT /gsap-scrolltrigger and /animejs for technique. Starters, not a list: images that reveal with a hard clip-path wipe (no soft fades — this brand doesn't fade), marquee of the drop name, size buttons that snap on select, add-to-cart that stamps like a price gun. prefers-reduced-motion respected always.
 
 ## [commerce] shop
 MUST use /ecommerce-kit before writing any cart, checkout, stock, or drop logic — drops are its exact domain: stock holds, oversell guards, webhook idempotency. Re-skin the flows to garment-tag brutalism; never hand-roll money or inventory. Sold out is stated flat: "GONE." — no waitlist theatrics unless a real waitlist exists.
@@ -49,7 +49,7 @@ MUST use /ecommerce-kit before writing any cart, checkout, stock, or drop logic 
 Terse and certain, like the label on good workwear: "Heavyweight. Enzyme-washed. Cut boxy." No superlatives, no lifestyle prose. Drop announcements state date, time, quantity — scarcity is a fact, not a performance.
 
 ## [stack] tech
-Next.js (App Router) + Tailwind CSS. GSAP + Anime.js v4. next/font, next/image (photography is the payload — art-direct the crops). Postgres via the /ecommerce-kit patterns when the shop lands. Vercel. No UI kits.
+Next.js (App Router) + Tailwind CSS. GSAP + Anime.js v4. next/font, next/image (photography is the payload — art-direct the crops). Postgres via the /ecommerce-kit patterns when the shop lands. Vercel. No UI kits. Libraries are defaults, not dogma — platform primitives win whenever they hit the same result at 60fps; shipping fewer is the better build.
 
 ## [seo] search
 MUST use /seo scaled to the site: Product JSON-LD with offers, availability, and sizes; per-product meta + OG in the lookbook art direction; image alt text that names the garment, not "image". Motion never blocks LCP.

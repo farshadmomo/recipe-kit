@@ -41,7 +41,7 @@ Minimal and precise — motion here is confirmation, not spectacle. CONSULT /ani
 Engineer-to-engineer: state what it does, how fast, and what it costs — with units ("Parses 1.2M rows/s on an M1. MIT licensed."). Benchmarks link to their methodology. Limitations get their own honest section; nothing builds trust faster. No exclamation marks, no "simply".
 
 ## [stack] tech
-Next.js (App Router) + Tailwind CSS. Anime.js v4 for the little motion there is. next/font (grotesk + a real coding mono), next/image for captures. MDX for docs pages. Fully static. Vercel. No UI kits.
+Next.js (App Router) + Tailwind CSS. Anime.js v4 for the little motion there is. next/font (grotesk + a real coding mono), next/image for captures. MDX for docs pages. Fully static. Vercel. No UI kits. Libraries are defaults, not dogma — platform primitives win whenever they hit the same result at 60fps; shipping fewer is the better build.
 
 ## [seo] search
 MUST use /seo scaled to the site: SoftwareApplication JSON-LD (version, OS, license), per-page meta + OG (make the OG card look like the terminal), docs crawlable with semantic headings — engineers arrive from search, docs pages ARE the funnel. Fast is the brand: green Core Web Vitals or the vibe is a lie.

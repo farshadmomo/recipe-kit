@@ -48,7 +48,7 @@ Only if the concept earns it — a playable 2D micro-toy often beats a 3D scene 
 Insert-coin energy, dry delivery: "New game. No quarters needed." Error pages in game-over grammar ("CONTINUE? 9…8…"). One arcade-ism per section max — the joke lands because it's rationed.
 
 ## [stack] tech
-Next.js (App Router) + Tailwind CSS. Anime.js v4. React Three Fiber only if the cabinet lands. next/font (pixel display font subset carefully — they get heavy), next/image. Fully static. Vercel. No UI kits.
+Next.js (App Router) + Tailwind CSS. Anime.js v4. React Three Fiber only if the cabinet lands. next/font (pixel display font subset carefully — they get heavy), next/image. Fully static. Vercel. No UI kits. Libraries are defaults, not dogma — platform primitives win whenever they hit the same result at 60fps; shipping fewer is the better build.
 
 ## [seo] search
 MUST use /seo scaled to the site: VideoGame/Organization JSON-LD, per-game meta + OG in the phosphor art direction, semantic headings under the glow. Game info must be crawlable text, not pixels. Motion never blocks LCP.

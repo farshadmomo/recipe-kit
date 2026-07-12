@@ -164,6 +164,13 @@ Hard-won from dogfooding:
   glass cards, no purple") outperform positive direction — a dogfood build
   reported the bans were what actually killed the templated defaults it would
   otherwise have shipped.
+- **Mandate outcomes, not tools.** A dogfood build shipped its best motion
+  with zero motion libraries — CSS keyframes on one `--beat` variable hit
+  60fps, and the minimal-code rule correctly overrode the stack mandate.
+  Write stacks as defaults that must earn their place over platform
+  primitives; reserve MUST for correctness, never for libraries. Identity
+  (vibe, voice, bans) transfers; orders (use X, animate Y) just get obeyed
+  or awkwardly overridden.
 - **Ask for creative risk explicitly.** An AI's first instinct is the
   statistically most likely design. An `[always] creativity` ingredient that
   demands one signature moment per build, and says "discard your first-instinct

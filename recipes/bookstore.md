@@ -46,7 +46,7 @@ MUST use /ecommerce-kit before writing any cart, checkout, or stock logic — re
 A bookseller who read the book: staff picks in first person, two sentences, concrete ("Read the first page standing up; you'll buy it. I did."). Category blurbs with personality, no publisher marketing paste. Microcopy stays in the shop's voice — empty cart: "Nothing in your stack yet."
 
 ## [stack] tech
-Next.js (App Router) + Tailwind CSS. Anime.js v4. next/font (subset the handwriting face hard — it's decoration, not body), next/image for covers. Inventory as typed local data until the shop lands, then Postgres via /ecommerce-kit patterns. Vercel. No UI kits.
+Next.js (App Router) + Tailwind CSS. Anime.js v4. next/font (subset the handwriting face hard — it's decoration, not body), next/image for covers. Inventory as typed local data until the shop lands, then Postgres via /ecommerce-kit patterns. Vercel. No UI kits. Libraries are defaults, not dogma — platform primitives win whenever they hit the same result at 60fps; shipping fewer is the better build.
 
 ## [seo] search
 MUST use /seo scaled to the site: Book JSON-LD with ISBN, author, and offer per title; BookStore schema with hours and geo; per-page meta + OG in the print art direction (OG cards like little book jackets). Alt text in the shop's voice. The catalog must be crawlable text.

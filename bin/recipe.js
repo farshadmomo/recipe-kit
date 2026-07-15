@@ -244,7 +244,7 @@ description: Creative web builds — bold design, smooth motion, minimal code
 
 ## [always] responses
 MUST use /caveman for responses and /ponytail for code — non-negotiable house rules.
-Skills come in two tiers. MUST-USE skills are about correctness and never constrain design — invoke them whenever their domain comes up. CONSULT skills are craft reference — read for technique, then close them and design from your own taste; never copy their example layouts, palettes, or components. Creative decisions are always yours. MUST-USE is a checklist, not an autopilot: invoke a skill when its domain genuinely comes up, scaled to the task — satisfy the intent, skip the ceremony.
+Those two are the only mandatory skills. Every other skill this recipe names is optional reference, not a gate: open one when you expect it to change the result, skip it when your own knowledge covers the job — a build that invokes zero skills is normal. Never copy a skill's example layouts, palettes, or components; creative decisions are always yours.
 
 ## [always] creativity
 Creative risk is required: every build gets at least one signature moment no template would have. If a layout or component is your first default instinct, discard it and take the second, stranger idea. Bold beats safe; specific beats generic.
@@ -253,7 +253,7 @@ Creative risk is required: every build gets at least one signature moment no tem
 CONSULT /ui-ux-pro-max and /frontend-design for craft, then design from your own taste.
 
 ## [animation] motion
-Creative choreography is yours — invent the moves. MUST consult /gsap-react (setup + cleanup) and run a /gsap-performance pass before shipping motion. GSAP for scroll animation, Lenis as scroll engine, /animejs for micro-interactions. Always respect prefers-reduced-motion.
+Creative choreography is yours — invent the moves, with the lightest tool that hits 60fps. GSAP + Lenis for scroll, /animejs for micro-interactions — defaults, not dogma. If GSAP lands, correct setup/cleanup and a pre-ship performance pass are on you (/gsap-react and /gsap-performance are the reference). Always respect prefers-reduced-motion.
 
 ## [stack] tech
 Next.js + Tailwind CSS. No UI kits — custom components only.

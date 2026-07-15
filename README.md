@@ -91,13 +91,13 @@ your own taste.
 
 ## [animation] motion
 
-MUST run /gsap-performance before shipping motion. GSAP for scroll,
-Lenis as scroll engine — the choreography itself is yours.
+GSAP for scroll, Lenis as scroll engine — defaults, not dogma. If GSAP
+lands, a /gsap-performance pass before shipping; the choreography is yours.
 
 ## [threed] scene
 
-MUST use /threejs-loaders for any model/texture loading. The scene concept
-is yours.
+/threejs-loaders is the reference for model/texture loading. The scene
+concept is yours.
 
 ## [stack] tech
 
@@ -148,13 +148,20 @@ one-level nested maps of flow lists or scalars.
 
 Hard-won from dogfooding:
 
-- **Split skills into two tiers.** MUST-USE skills are about correctness —
-  asset loaders, framework setup/cleanup, performance passes, money handling,
-  schema — invoking them never constrains design, and skipping them ships
-  bugs. CONSULT skills are craft reference — read for technique, then close
-  them and design from your own taste; never copy their example layouts or
-  palettes. Blanket mandates produce compliance, and compliance kills taste.
-  Keep "MUST" only where being wrong is expensive.
+- **Only identity skills are mandatory.** A voice skill and a code-style
+  skill (here `/caveman` and `/ponytail`) are cheap, ride every prompt, and
+  are safe to MUST. Every capability skill — motion, 3D, SEO, commerce —
+  works better as optional reference: name it, say when it pays off, and let
+  the model judge whether opening it will change the result. A dogfood build
+  invoked zero skills and shipped the best result of the run — forced
+  invocation buys cost and compliance, not quality. Keep the outcomes
+  mandatory (correct cleanup, valid schema, 60fps), never the skill.
+- **Let the user's concept win.** A vibe written as a cage gets thrown out
+  wholesale the first time a request contradicts it — a noir cinema recipe
+  asked for a pop-art museum loses its bans along with its palette. Give
+  every vibe a transfer clause: the concept is a default; when the user asks
+  for something else, keep the craft bar and the bans and rebuild the
+  identity around their concept.
 - **A recipe is a checklist, not an autopilot.** Tell the AI to scale mandated
   skills to the task — "satisfy the intent, skip the ceremony." A dogfood
   build reported that obeying mandates literally (a full SEO audit for a

@@ -8,6 +8,12 @@ routes:
   threed: [3d, three, webgl, shader, scene, projector, beam, hero]
   copy: [copy, text, headline, tagline, tone, wording, brand, voice, slogan, hero, section, page, landing, synopsis, program]
   seo: [seo, meta, og, sitemap, schema, search, lighthouse, page, landing, showtime, screening]
+skills:
+  # per-prompt nudge — when a channel fires, the hook names these for that prompt
+  ui: [ui-ux-pro-max, frontend-design, impeccable]
+  animation: [gsap-react, gsap-performance, gsap-scrolltrigger]
+  threed: [threejs-fundamentals, threejs-loaders]
+  seo: [seo]
 requires:
   caveman: claude plugin marketplace add JuliusBrussee/caveman && claude plugin install caveman@caveman
   ponytail: claude plugin marketplace add DietrichGebert/ponytail && claude plugin install ponytail@ponytail

@@ -55,7 +55,8 @@ function main() {
     }
   }
 
-  const out = renderContext(recipe, selectIngredients(recipe, payload.prompt || ''));
+  const prompt = payload.prompt || '';
+  const out = renderContext(recipe, selectIngredients(recipe, prompt), prompt);
   if (out) process.stdout.write(out);
 }
 

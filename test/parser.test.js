@@ -157,3 +157,21 @@ test('mergeRecipes: child requires entry overrides parent, parent-only entries s
     ponytail: 'npx skills add ponytail',
   });
 });
+
+test('a map-opening key with a trailing comment still opens the map', () => {
+  const r = parseRecipe('---\nname: x\nroutes: # optional channel overrides\n  animation: [animate]\n---\n## [always] a\nbody\n');
+  assert.deepEqual(r.meta.routes, { animation: ['animate'] });
+});
+
+test('skills map parses, merges child-over-parent, and round-trips', () => {
+  const parent = parseRecipe('---\nname: base\nskills:\n  ui: [ui-ux-pro-max, frontend-design]\n  seo: [seo]\n---\n## [always] a\nbody\n');
+  assert.deepEqual(parent.meta.skills, {
+    ui: ['ui-ux-pro-max', 'frontend-design'],
+    seo: ['seo'],
+  });
+  const child = parseRecipe('---\nname: kid\nskills:\n  ui: [impeccable]\n---\n## [always] a\nbody\n');
+  const m = mergeRecipes(parent, child);
+  assert.deepEqual(m.meta.skills, { ui: ['impeccable'], seo: ['seo'] });
+  const again = parseRecipe(serializeRecipe(parent));
+  assert.deepEqual(again.meta.skills, parent.meta.skills);
+});

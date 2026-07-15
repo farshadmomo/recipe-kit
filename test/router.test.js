@@ -2,12 +2,15 @@
 const test = require('node:test');
 const assert = require('node:assert');
 const { parseRecipe } = require('../src/parser');
-const { DEFAULT_ROUTES, selectIngredients, renderContext } = require('../src/router');
+const { DEFAULT_ROUTES, selectIngredients, skillLine, renderContext } = require('../src/router');
 
 const RECIPE = parseRecipe(`---
 name: modern-ecom
 routes:
   animation: [animate, scroll, parallax]
+skills:
+  ui: [ui-ux-pro-max, frontend-design]
+  animation: [gsap-react, frontend-design]
 ---
 
 ## [always] responses
@@ -80,4 +83,32 @@ Stuff.
 
 test('renderContext returns empty string for no ingredients', () => {
   assert.equal(renderContext(RECIPE, []), '');
+});
+
+test('skillLine names skills only for fired channels', () => {
+  assert.equal(skillLine(RECIPE, 'what time is it'), '');
+  assert.match(skillLine(RECIPE, 'build a hero section'),
+    /skills for this prompt.*\/ui-ux-pro-max, \/frontend-design \(ui\)/);
+  assert.match(skillLine(RECIPE, 'add a parallax effect'),
+    /\/gsap-react, \/frontend-design \(animation\)/);
+});
+
+test('skillLine dedupes a skill listed under several channels', () => {
+  const line = skillLine(RECIPE, 'animate the hero design');
+  assert.equal(line.match(/\/frontend-design/g).length, 1);
+  assert.match(line, /\/gsap-react/);
+});
+
+test('renderContext appends the skill line only when a prompt is given', () => {
+  const picked = selectIngredients(RECIPE, 'build a page');
+  assert.match(renderContext(RECIPE, picked, 'build a page'), /skills for this prompt/);
+  assert.doesNotMatch(renderContext(RECIPE, picked), /skills for this prompt/);
+});
+
+test('recipes without skills: render no skill line', () => {
+  const bare = parseRecipe('---\nname: bare\n---\n\n## [ui] design\nStuff.\n');
+  assert.equal(skillLine(bare, 'build a page'), '');
+  assert.doesNotMatch(
+    renderContext(bare, selectIngredients(bare, 'build a page'), 'build a page'),
+    /skills for this prompt/);
 });

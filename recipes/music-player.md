@@ -7,6 +7,11 @@ routes:
   animation: [animate, animation, motion, transition, hover, stagger, spring, press, scrub, seek, knob, slider, hero, section, page, component, build, nav, player, control]
   copy: [copy, text, label, tone, wording, microcopy, empty, error, tooltip, name]
   seo: [seo, meta, og, schema, search, page, landing]
+skills:
+  # per-prompt nudge — when a channel fires, the hook names these for that prompt
+  ui: [ui-ux-pro-max, frontend-design, impeccable]
+  animation: [animejs, animation-libraries]
+  seo: [seo]
 requires:
   caveman: claude plugin marketplace add JuliusBrussee/caveman && claude plugin install caveman@caveman
   ponytail: claude plugin marketplace add DietrichGebert/ponytail && claude plugin install ponytail@ponytail

@@ -3,7 +3,7 @@
 // ponytail: YAML subset — scalars, [flow, lists], one-level maps of flow lists or scalars.
 // Swap in a real YAML lib only if recipes outgrow this.
 function parseFrontmatter(text) {
-  const meta = { extends: [], routes: {}, requires: {} };
+  const meta = { extends: [], routes: {}, requires: {}, skills: {} };
   let currentMap = null;
   for (const raw of text.split(/\r?\n/)) {
     if (!raw.trim()) continue;
@@ -20,7 +20,7 @@ function parseFrontmatter(text) {
     const top = raw.match(/^([\w-]+):\s*(.*)$/);
     if (!top) continue;
     const [, key, value] = top;
-    if (value === '') {
+    if (value === '' || value.startsWith('#')) { // bare key or trailing comment opens a map
       currentMap = key;
       meta[key] = {};
       continue;
@@ -65,6 +65,7 @@ function mergeRecipes(parent, child) {
     extends: [],
     routes: { ...parent.meta.routes, ...child.meta.routes },
     requires: { ...(parent.meta.requires || {}), ...(child.meta.requires || {}) },
+    skills: { ...(parent.meta.skills || {}), ...(child.meta.skills || {}) },
   };
   const byName = new Map(parent.ingredients.map((i) => [i.name, i]));
   for (const i of child.ingredients) byName.set(i.name, i);
@@ -81,6 +82,11 @@ function serializeRecipe({ meta, ingredients }) {
   if (routes.length) {
     lines.push('routes:');
     for (const [ch, kws] of routes) lines.push(`  ${ch}: [${kws.join(', ')}]`);
+  }
+  const skills = Object.entries(meta.skills || {});
+  if (skills.length) {
+    lines.push('skills:');
+    for (const [ch, names] of skills) lines.push(`  ${ch}: [${names.join(', ')}]`);
   }
   const requires = Object.entries(meta.requires || {});
   if (requires.length) {

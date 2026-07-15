@@ -76,6 +76,9 @@ extends: [] # optional: layer on top of other recipes
 routes: # optional: override or add channel keywords
   animation: [animate, scroll, motion, hover, parallax]
   threed: [3d, three, webgl, shader, scene]
+skills: # optional: per-prompt skill suggestions per channel
+  ui: [ui-ux-pro-max, frontend-design]
+  animation: [gsap-react, gsap-performance]
 requires: # optional: skills this recipe leans on → install commands
   gsap-performance: npx skills add greensock/gsap-skills@gsap-performance
 ---
@@ -116,6 +119,10 @@ Next.js + Tailwind CSS. No other CSS frameworks.
   Resolved and flattened at install time — share a 5-line overlay instead of a
   full copy. Diamonds resolve; true cycles abort. A repo with several recipes
   is a **cookbook**.
+- `skills`: channel → skill names. When a channel fires, the hook appends
+  one line naming exactly those skills for that prompt — the thing you'd
+  type by hand ("build a hero using /ui-ux-pro-max"), automated. Suggestions,
+  never mandates; a prompt that fires no mapped channel gets no line.
 - `requires`: skills this recipe's ingredients mention by name, mapped to
   their install command. `recipe use` warns when any are missing; `recipe
   setup` lists and (with `--yes`) installs them.
@@ -178,6 +185,11 @@ Hard-won from dogfooding:
   primitives; reserve MUST for correctness, never for libraries. Identity
   (vibe, voice, bans) transfers; orders (use X, animate Y) just get obeyed
   or awkwardly overridden.
+- **Skill nudges beat skill prose.** Models treat ambient "use /x" prose as
+  advice and skip it, but obey the same names when the user types them in
+  the prompt. The `skills:` map automates exactly that: one line, per
+  prompt, naming only the skills whose channel fired. More precise than a
+  mandate, more effective than a mention.
 - **Ask for creative risk explicitly.** An AI's first instinct is the
   statistically most likely design. An `[always] creativity` ingredient that
   demands one signature moment per build, and says "discard your first-instinct

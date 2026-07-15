@@ -146,7 +146,7 @@ function testPrompt(prompt) {
   if (!prompt) throw new Error('usage: recipe test <prompt>');
   const { activeRecipeFile } = require('../src/recipe-hook');
   const { parseRecipe } = require('../src/parser');
-  const { selectIngredients } = require('../src/router');
+  const { selectIngredients, skillLine } = require('../src/router');
   const file = activeRecipeFile(process.cwd());
   if (!file || !fs.existsSync(file)) {
     console.log('recipe: no active recipe');
@@ -158,6 +158,8 @@ function testPrompt(prompt) {
   for (const i of recipe.ingredients) {
     console.log(`${picked.has(i) ? '+' : '-'} [${i.tag}] ${i.name}`);
   }
+  const line = skillLine(recipe, prompt);
+  if (line) console.log(line);
 }
 
 // Later extends entries override earlier ones; the recipe itself overrides all.
@@ -238,6 +240,11 @@ name: my-recipe
 version: 0.1.0
 author: you
 description: Creative web builds — bold design, smooth motion, minimal code
+# skills: channel → names. When a channel fires, the hook appends one line
+# suggesting exactly these skills for that prompt (never forced).
+skills:
+  ui: [ui-ux-pro-max, frontend-design]
+  animation: [gsap-react, gsap-performance, animejs]
 # requires:            # optional: skills this recipe leans on → install commands
 #   caveman: <install command>
 ---

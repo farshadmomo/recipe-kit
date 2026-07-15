@@ -9,6 +9,13 @@ routes:
   threed: [3d, three, webgl, shader, scene, bean, pour, hero]
   copy: [copy, text, headline, tagline, tone, wording, brand, voice, slogan, hero, section, page, landing, menu]
   seo: [seo, meta, og, sitemap, schema, search, lighthouse, page, landing]
+skills:
+  # per-prompt nudge — when a channel fires, the hook names these for that prompt
+  ui: [ui-ux-pro-max, frontend-design, web-design, impeccable]
+  animation: [gsap-react, gsap-performance, gsap-scrolltrigger, animejs]
+  threed: [threejs-fundamentals, threejs-loaders]
+  seo: [seo]
+  backend: [ecommerce-kit]
 requires:
   # skills this recipe leans on — `recipe use` warns if missing, `recipe setup --yes` installs
   caveman: claude plugin marketplace add JuliusBrussee/caveman && claude plugin install caveman@caveman

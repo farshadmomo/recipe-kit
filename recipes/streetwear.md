@@ -8,6 +8,12 @@ routes:
   copy: [copy, text, headline, tagline, tone, wording, brand, voice, slogan, hero, section, page, landing, product, drop]
   seo: [seo, meta, og, sitemap, schema, search, lighthouse, page, landing, product]
   commerce: [cart, checkout, product, order, shop, buy, stock, drop, release, size, merch]
+skills:
+  # per-prompt nudge — when a channel fires, the hook names these for that prompt
+  ui: [ui-ux-pro-max, frontend-design, web-design, impeccable]
+  animation: [gsap-react, gsap-performance, gsap-scrolltrigger, animejs]
+  commerce: [ecommerce-kit]
+  seo: [seo]
 requires:
   caveman: claude plugin marketplace add JuliusBrussee/caveman && claude plugin install caveman@caveman
   ponytail: claude plugin marketplace add DietrichGebert/ponytail && claude plugin install ponytail@ponytail

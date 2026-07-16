@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="https://raw.githubusercontent.com/farshadmomo/recipe-kit/HEAD/images/logo.png" alt="recipe-kit" width="320">
+</p>
+
 # recipe-kit
 
 Skills give your AI _capabilities_. A **recipe** gives it _taste_.

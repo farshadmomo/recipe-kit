@@ -2,6 +2,10 @@
   <img src="https://raw.githubusercontent.com/farshadmomo/recipe-kit/HEAD/images/hero.jpg" alt="recipe-kit — a marketplace of taste. Skills give your AI capabilities; a recipe gives it taste. Install with: npm i -g recipe-kit" width="520">
 </p>
 
+<p align="center">
+  <b><a href="https://recipe-kit-marketplace.vercel.app">Browse the flavor index →</a></b>
+</p>
+
 # recipe-kit
 
 Skills give your AI _capabilities_. A **recipe** gives it _taste_.

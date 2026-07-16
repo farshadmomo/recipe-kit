@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://raw.githubusercontent.com/farshadmomo/recipe-kit/HEAD/images/logo.png" alt="recipe-kit" width="320">
+  <img src="https://raw.githubusercontent.com/farshadmomo/recipe-kit/HEAD/images/hero.jpg" alt="recipe-kit — a marketplace of taste. Skills give your AI capabilities; a recipe gives it taste. Install with: npm i -g recipe-kit" width="520">
 </p>
 
 # recipe-kit

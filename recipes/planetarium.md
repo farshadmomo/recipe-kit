@@ -3,6 +3,7 @@ name: planetarium-verge
 version: 1.0.0
 author: farshadmomo
 description: Planetarium / observatory — deep-space dark, luminous thin type, shader starfield, wonder with real numbers
+extends: [./creative-core.md]
 routes:
   animation: [animate, animation, scroll, motion, transition, hover, parallax, stagger, gsap, lenis, reveal, drift, hero, section, page, component, landing, build, nav, navbar, footer, orbit, journey]
   threed: [3d, three, webgl, shader, scene, star, starfield, planet, orbit, space, nebula, hero]
@@ -15,8 +16,6 @@ skills:
   threed: [threejs-fundamentals, threejs-loaders, threejs-shaders]
   seo: [seo]
 requires:
-  caveman: claude plugin marketplace add JuliusBrussee/caveman && claude plugin install caveman@caveman
-  ponytail: claude plugin marketplace add DietrichGebert/ponytail && claude plugin install ponytail@ponytail
   ui-ux-pro-max: claude plugin marketplace add nextlevelbuilder/ui-ux-pro-max-skill && claude plugin install ui-ux-pro-max@ui-ux-pro-max-skill
   frontend-design: claude plugin marketplace add anthropics/claude-plugins-official && claude plugin install frontend-design@claude-plugins-official
   impeccable: claude plugin marketplace add pbakaus/impeccable && claude plugin install impeccable@impeccable
@@ -32,18 +31,8 @@ requires:
   seo: claude plugin marketplace add AgriciDaniel/claude-seo && claude plugin install claude-seo@agricidaniel-claude-seo
 ---
 
-## [always] responses
-MUST use /caveman for status updates and routine replies, /ponytail for code — smallest working diff, reuse before writing. When explaining design rationale, clarity outranks compression — drop caveman and answer plainly.
-Those two are the only mandatory skills. Every other skill this recipe names is optional reference, not a gate: open one when you expect it to change the result — an API you’d otherwise guess at, a domain where being wrong is expensive — and skip it when your own knowledge already covers the job. A build that invokes zero skills is normal, often the best-value one; the work is judged on what ships, not on which skills were opened. Never invoke a skill as ceremony, and never copy a skill’s example layouts or palettes — design from this recipe’s taste through your own judgment.
-
 ## [always] vibe
-The house lights just went down and the dome lit up. True near-black with a blue cast (never #000 flat), type thin and luminous with wide tracking — labels like instrument readouts, headlines like constellation names. Wonder is earned with PRECISION: real magnitudes, real distances, real dates, units always ("4.246 ly", not "unimaginably far"). Banned: NASA stock-photo hero, purple nebula gradients, sci-fi HUD overload, lens flares, Interstellar-trailer copy ("journey beyond imagination"). This concept is the default, not a cage: when the user asks for a different concept or aesthetic, their request wins — keep the craft bar, the creative-risk rule, and the spirit of the bans, rebuild the identity around THEIR concept, and never land on the generic AI-site look (purple gradients, emoji section headers, glass cards, cookie-cutter grids).
-
-## [always] creativity
-Creative risk is a requirement. Every build gets one signature moment no template would have — a scale comparison that lands in the stomach, an interaction that makes someone say "wait, is that real data?" If a section is the first thing you'd produce by default, discard it and take the second, stranger idea. The night sky is already spectacular; your job is framing, not fireworks.
-
-## [stack] kickoff
-Project-start ritual — ONLY if DESIGN.md does not exist; skip once it does. Produce 3 concept directions that differ on every axis: layout system, type pairing, palette, motion concept, signature interaction. Present each as a compact sheet with the one moment someone would screenshot. No two directions may share an axis value. Ask the user to pick (if unattended, pick the riskier one). Write the winner into DESIGN.md as the design contract — later prompts follow it and never drift back to defaults.
+The house lights just went down and the dome lit up. True near-black with a blue cast (never #000 flat), type thin and luminous with wide tracking — labels like instrument readouts, headlines like constellation names. Wonder is earned with PRECISION: real magnitudes, real distances, real dates, units always ("4.246 ly", not "unimaginably far"). Banned: NASA stock-photo hero, purple nebula gradients, sci-fi HUD overload, lens flares, Interstellar-trailer copy ("journey beyond imagination"). The night sky is already spectacular; your job is framing, not fireworks — the signature moment is a scale comparison that lands in the stomach, or an interaction that makes someone ask "wait, is that real data?"
 
 ## [ui] design
 Craft reference if you want it: /ui-ux-pro-max and /frontend-design; an /impeccable pass on finished sections pays off. Follow DESIGN.md. Show schedule as an observation log, not a card grid — date, dome, duration, one-line pitch. Content sections framed like telescope views: generous dark margins, one luminous focus each. Data callouts as instrument readouts with tabular numerals. After each section, run the generic-kill pass. Thin type on near-black must still hit AA — bump weight before dropping the aesthetic.
@@ -64,4 +53,4 @@ Next.js (App Router) + Tailwind CSS. GSAP + Lenis. React Three Fiber + drei for 
 Correct schema and meta are non-negotiable; /seo is the reference, scaled to the site: Planetarium + Event JSON-LD per show (dates, dome, duration), per-page meta + OG in the deep-space art direction, semantic headings under the starfield. All show info crawlable as text — the canvas is presentation, never the record. LCP must not wait on WebGL.
 
 ## [testing] checks
-Per /ponytail: one runnable check per non-trivial logic — the show-schedule grouping and any scale-math conversions first (an off-by-1000 in light-years is a credibility bug). Verify the journey by driving the scroll at both motion preferences.
+The show-schedule grouping and any scale-math conversions get the checks first (an off-by-1000 in light-years is a credibility bug). Verify the journey by driving the scroll at both motion preferences.

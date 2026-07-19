@@ -162,16 +162,39 @@ function testPrompt(prompt) {
   if (line) console.log(line);
 }
 
+// gh:u/r/recipes/x.md → gh:u/r/recipes; bare gh:u/r → itself (the repo IS the dir).
+function ghDir(ref) {
+  const parts = ref.slice(3).split('/');
+  return parts.length <= 2 ? ref : `gh:${parts.slice(0, -1).join('/')}`;
+}
+
+// Resolve a relative extends against a gh: base, staying inside the repo.
+// path.posix so Windows backslashes never leak into the raw URL.
+function rebaseGh(ghBase, rel) {
+  const joined = path.posix.normalize(path.posix.join(ghBase.slice(3), rel));
+  if (joined.startsWith('..') || joined.split('/').length < 2) {
+    throw new Error(`bad ref: ${rel} escapes ${ghBase}`);
+  }
+  return `gh:${joined}`;
+}
+
+// Cycle key: gh:u/r and gh:u/r/recipe.md fetch the same file — canonicalize both.
+function resolveKey(ref, baseDir) {
+  if (!ref.startsWith('gh:')) return path.resolve(baseDir, ref);
+  const parts = ref.slice(3).split('/');
+  return parts.length === 2 ? `${ref}/recipe.md` : ref;
+}
+
 // Later extends entries override earlier ones; the recipe itself overrides all.
 async function resolveRecipe(ref, baseDir, seen) {
   const { parseRecipe, mergeRecipes } = require('../src/parser');
-  const key = ref.startsWith('gh:') ? ref : path.resolve(baseDir, ref);
+  const key = resolveKey(ref, baseDir);
   if (seen.has(key)) throw new Error(`circular extends via ${ref}`);
   seen.add(key);
   let text, nextBase;
   if (ref.startsWith('gh:')) {
     text = await fetchGh(ref);
-    nextBase = baseDir; // gh recipes may only extend gh: refs or absolute paths
+    nextBase = ghDir(ref); // gh base — relative extends rebase against it below
   } else {
     const abs = path.resolve(baseDir, ref);
     text = fs.readFileSync(abs, 'utf8');
@@ -179,7 +202,11 @@ async function resolveRecipe(ref, baseDir, seen) {
   }
   const recipe = parseRecipe(text);
   let acc = null;
-  for (const parentRef of recipe.meta.extends) {
+  for (let parentRef of recipe.meta.extends) {
+    // inside a gh recipe, a relative extends stays inside the repo via the gh base
+    if (nextBase.startsWith('gh:') && !parentRef.startsWith('gh:') && !path.isAbsolute(parentRef)) {
+      parentRef = rebaseGh(nextBase, parentRef);
+    }
     const parent = await resolveRecipe(parentRef, nextBase, seen);
     acc = acc ? mergeRecipes(acc, parent) : parent;
   }
@@ -190,11 +217,13 @@ async function resolveRecipe(ref, baseDir, seen) {
 function fetchGh(ref) {
   const parts = ref.slice(3).split('/');
   if (parts.length < 2) return Promise.reject(new Error(`bad ref: ${ref}`));
+  const base = process.env.RECIPE_GH_BASE || 'https://raw.githubusercontent.com';
   const [user, repo, ...rest] = parts;
   const file = rest.length ? rest.join('/') : 'recipe.md';
-  const url = `https://raw.githubusercontent.com/${user}/${repo}/HEAD/${file}`;
+  const url = `${base}/${user}/${repo}/HEAD/${file}`;
+  const httpMod = url.startsWith('https:') ? require('https') : require('http');
   return new Promise((resolve, reject) => {
-    require('https')
+    httpMod
       .get(url, (res) => {
         if (res.statusCode !== 200) {
           res.resume();
@@ -266,7 +295,11 @@ Creative choreography is yours — invent the moves, with the lightest tool that
 Next.js + Tailwind CSS. No UI kits — custom components only.
 `;
 
-main().catch((e) => {
-  console.error(`recipe: ${e.message}`);
-  process.exit(1);
-});
+if (require.main === module) {
+  main().catch((e) => {
+    console.error(`recipe: ${e.message}`);
+    process.exit(1);
+  });
+}
+
+module.exports = { resolveRecipe, fetchGh, ghDir, rebaseGh };

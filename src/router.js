@@ -11,6 +11,10 @@ const DEFAULT_ROUTES = {
   backend: ['api', 'server', 'database', 'db', 'endpoint', 'auth', 'backend',
     'schema', 'migration'],
   testing: ['test', 'tests', 'spec', 'coverage', 'e2e'],
+  copy: ['copy', 'headline', 'tagline', 'microcopy', 'wording', 'tone', 'voice',
+    'slogan', 'cta'],
+  docs: ['docs', 'documentation', 'readme', 'changelog', 'docstring', 'tutorial',
+    'guide'],
 };
 
 function escapeRe(s) {

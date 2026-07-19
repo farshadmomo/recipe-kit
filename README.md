@@ -50,13 +50,19 @@ recipe use gh:farshadmomo/recipe-kit/recipes/coffee.md   # an example from below
 ## Cookbook (examples)
 
 recipe-kit is the tool; these are just proof of range. `recipes/` holds
-eleven complete house styles — each with its own vibe, banned defaults,
-motion identity, and `requires:` block. Use one as-is, or copy one, gut it,
-and make it yours:
+fifteen complete house styles — each with its own vibe, banned defaults,
+motion identity, and `requires:` block. They all `extends: [./creative-core.md]`,
+a base recipe that carries the shared engine (response rules, concept-transfer,
+the creative-risk mandate, the project-start ritual); each file is just the
+flavor on top. Use one as-is, or copy one, gut it, and make it yours:
 
 ```bash
 recipe use gh:farshadmomo/recipe-kit/recipes/festival.md
 ```
+
+> These cookbook recipes `extends: [./creative-core.md]`, so fetching one over
+> `gh:` resolves that sibling too — it needs **recipe-kit ≥ 0.3.0**. On older
+> clients the extend fails to resolve; upgrade with `npm i -g recipe-kit`.
 
 | recipe            | concept                                                            |
 | ----------------- | ------------------------------------------------------------------ |
@@ -71,6 +77,44 @@ recipe use gh:farshadmomo/recipe-kit/recipes/festival.md
 | `devtool.md`      | dev-tool SaaS — terminal-honest, real output, benchmarks over adjectives |
 | `bookstore.md`    | indie bookshop — literary print, covers as objects, margin notes    |
 | `planetarium.md`  | planetarium — deep-space dark, shader starfield, wonder with units  |
+| `dashboard.md`    | data dashboard — dense but legible, tabular numerals, charts that answer a question |
+| `api.md`          | HTTP API house style — resource-first, errors that document themselves, boring by design |
+| `docs-voice.md`   | docs & prose voice — plain human register, AI-tells banned, respects the reader's time |
+| `cli.md`          | command-line tool — Unix-honest, `--help` as the front door, pipeable output |
+
+The odd ones out are `dashboard`, `api`, `docs-voice`, and `cli` — proof the
+anti-template engine generalizes past creative websites to dense UI, backend
+contracts, prose, and terminals. `creative-core.md` isn't in the table because
+it's the base, not a finished style — you extend it, you don't activate it.
+
+### Base + overlay
+
+`creative-core.md` is the worked example of the intended pattern: put the parts
+that never change (the `[always]` house rules, the concept-transfer clause, the
+creative-risk mandate, the DESIGN.md kickoff ritual) in a base recipe, and let
+each real recipe be a thin overlay that adds only its flavor:
+
+```markdown
+---
+name: my-shop
+extends: [./creative-core.md]
+routes:
+  commerce: [cart, checkout, drop, stock]
+---
+
+## [always] vibe
+Bans, palette, one signature moment — the identity, nothing else.
+
+## [commerce] shop
+Never hand-roll money; re-skin /ecommerce-kit's flows to the vibe.
+```
+
+Ingredients **merge by name**: the base's `responses`, `transfer`,
+`creativity`, and `kickoff` flow in untouched, while your overlay adds `vibe`,
+`shop`, and the rest. Define an ingredient with the **same name** as a base one
+to override it wholesale — `api.md` does exactly this to replace the generic
+`kickoff` with an API-shaped ritual. `requires:` and `skills:` deep-merge the
+same way, so the base's mandatory `caveman`/`ponytail` are always present.
 
 ## Recipe format
 
@@ -118,9 +162,9 @@ Next.js + Tailwind CSS. No other CSS frameworks.
 - `## [tag] name` defines an **ingredient**.
 - `[always]` ingredients inject on every prompt.
 - Built-in channels with default keywords: `ui`, `animation`, `stack`,
-  `backend`, `testing`. Invent your own (`threed`, `copy`, `seo`) by giving it
-  a `routes:` entry — a tag with no route never fires, and the hook warns on
-  stderr.
+  `backend`, `testing`, `copy`, `docs`. Invent your own (`threed`, `seo`,
+  `commerce`, `data`) by giving it a `routes:` entry — a tag with no route
+  never fires, and the hook warns on stderr.
 - `name` must be filename-safe (`[A-Za-z0-9._-]`); it becomes the installed
   filename.
 - `extends`: later entries override earlier; the recipe itself overrides all.
@@ -239,7 +283,7 @@ Hard-won from dogfooding:
 ```bash
 git clone https://github.com/farshadmomo/recipe-kit
 cd recipe-kit && npm link   # makes `recipe` point at your working copy
-node --test                 # 52 tests, zero dependencies
+node --test                 # 82 tests, zero dependencies
 ```
 
 Zero runtime and dev dependencies. Node ≥18, CommonJS. Design notes and the

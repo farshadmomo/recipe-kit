@@ -3,6 +3,7 @@ name: arcade-crt
 version: 1.0.0
 author: farshadmomo
 description: Retro arcade / indie game studio — CRT phosphor glow, game-feel micro-interactions, one hidden easter egg
+extends: [./creative-core.md]
 routes:
   animation: [animate, animation, scroll, motion, transition, hover, stagger, spring, bounce, press, shake, hero, section, page, component, landing, build, nav, navbar, footer, game]
   threed: [3d, three, webgl, shader, scene, voxel, cabinet, hero]
@@ -15,8 +16,6 @@ skills:
   threed: [threejs-fundamentals, threejs-materials, threejs-interaction]
   seo: [seo]
 requires:
-  caveman: claude plugin marketplace add JuliusBrussee/caveman && claude plugin install caveman@caveman
-  ponytail: claude plugin marketplace add DietrichGebert/ponytail && claude plugin install ponytail@ponytail
   ui-ux-pro-max: claude plugin marketplace add nextlevelbuilder/ui-ux-pro-max-skill && claude plugin install ui-ux-pro-max@ui-ux-pro-max-skill
   frontend-design: claude plugin marketplace add anthropics/claude-plugins-official && claude plugin install frontend-design@claude-plugins-official
   impeccable: claude plugin marketplace add pbakaus/impeccable && claude plugin install impeccable@impeccable
@@ -28,18 +27,8 @@ requires:
   seo: claude plugin marketplace add AgriciDaniel/claude-seo && claude plugin install claude-seo@agricidaniel-claude-seo
 ---
 
-## [always] responses
-MUST use /caveman for status updates and routine replies, /ponytail for code — smallest working diff, reuse before writing. When explaining design rationale, clarity outranks compression — drop caveman and answer plainly.
-Those two are the only mandatory skills. Every other skill this recipe names is optional reference, not a gate: open one when you expect it to change the result — an API you’d otherwise guess at, a domain where being wrong is expensive — and skip it when your own knowledge already covers the job. A build that invokes zero skills is normal, often the best-value one; the work is judged on what ships, not on which skills were opened. Never invoke a skill as ceremony, and never copy a skill’s example layouts or palettes — design from this recipe’s taste through your own judgment.
-
 ## [always] vibe
-An arcade the way you remember it, not the way it looked: black with phosphor green and magenta glow, subtle scanlines and vignette (a whisper, never a filter slapped at 100%), pixel display type for headings ONLY — body text is a clean grotesk because legibility is not retro-optional. Everything responds like a game: states are instant, feedback is physical. Banned: comic-sans-adjacent pixel soup, autoplaying chiptune, 8-bit clipart walls, "PRESS START" used more than once, CRT filter over body text. This concept is the default, not a cage: when the user asks for a different concept or aesthetic, their request wins — keep the craft bar, the creative-risk rule, and the spirit of the bans, rebuild the identity around THEIR concept, and never land on the generic AI-site look (purple gradients, emoji section headers, glass cards, cookie-cutter grids).
-
-## [always] creativity
-Creative risk is a requirement. Every build hides one easter egg worth discovering (a Konami code, a playable micro-toy in the 404) and shows one signature moment no template would have. If a component is the first thing you'd produce by default, discard it and take the second, stranger idea. Game-feel beats decoration: juice the interactions, not the backgrounds.
-
-## [stack] kickoff
-Project-start ritual — ONLY if DESIGN.md does not exist; skip once it does. Produce 3 concept directions that differ on every axis: layout system, type pairing, palette, motion concept, signature interaction. Present each as a compact sheet with the one moment someone would screenshot. No two directions may share an axis value. Ask the user to pick (if unattended, pick the riskier one). Write the winner into DESIGN.md as the design contract — later prompts follow it and never drift back to defaults.
+An arcade the way you remember it, not the way it looked: black with phosphor green and magenta glow, subtle scanlines and vignette (a whisper, never a filter slapped at 100%), pixel display type for headings ONLY — body text is a clean grotesk because legibility is not retro-optional. Everything responds like a game: states are instant, feedback is physical. Banned: comic-sans-adjacent pixel soup, autoplaying chiptune, 8-bit clipart walls, "PRESS START" used more than once, CRT filter over body text. Every build hides one easter egg worth discovering — a Konami code, a playable micro-toy in the 404 — and game-feel beats decoration: juice the interactions, not the backgrounds.
 
 ## [ui] design
 Craft reference if you want it: /ui-ux-pro-max and /frontend-design; an /impeccable pass on finished sections pays off. Follow DESIGN.md. Game roster as cabinet marquees or cartridge spines — never a uniform card grid. Stats as score counters with tabular numerals. High-score-table layout for anything list-shaped (team, changelog, leaderboard). After each section, run the generic-kill pass. Glow effects must keep text at AA contrast; the vibe lives in accents, not readability.
@@ -60,4 +49,4 @@ Next.js (App Router) + Tailwind CSS. Anime.js v4. React Three Fiber only if the 
 Correct schema and meta are non-negotiable; /seo is the reference, scaled to the site: VideoGame/Organization JSON-LD, per-game meta + OG in the phosphor art direction, semantic headings under the glow. Game info must be crawlable text, not pixels. Motion never blocks LCP.
 
 ## [testing] checks
-Per /ponytail: one runnable check per non-trivial logic — the easter-egg input sequence first (it's a tiny state machine). Verify juice by playing the page at both motion preferences.
+The easter-egg input sequence gets the check first (it's a tiny state machine). Verify juice by playing the page at both motion preferences.

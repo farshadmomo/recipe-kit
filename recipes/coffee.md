@@ -3,6 +3,7 @@ name: coffee-creative
 version: 1.0.0
 author: farshadmomo
 description: Modern, very creative specialty coffee shop site — cinematic scroll, tactile motion, editorial type, minimal code
+extends: [./creative-core.md]
 routes:
   # motion is this site's identity — it rides every UI-construction prompt, not just explicit motion words
   animation: [animate, animation, scroll, motion, transition, hover, parallax, stagger, gsap, lenis, reveal, marquee, cursor, spring, smooth, hero, section, page, component, landing, build, nav, navbar, menu, footer]
@@ -18,9 +19,7 @@ skills:
   backend: [ecommerce-kit]
 requires:
   # skills this recipe leans on — `recipe use` warns if missing, `recipe setup --yes` installs
-  caveman: claude plugin marketplace add JuliusBrussee/caveman && claude plugin install caveman@caveman
   ecommerce-kit: claude plugin marketplace add farshadmomo/ecommerce-kit && claude plugin install ecommerce-kit@ecommerce-kit
-  ponytail: claude plugin marketplace add DietrichGebert/ponytail && claude plugin install ponytail@ponytail
   frontend-design: claude plugin marketplace add anthropics/claude-plugins-official && claude plugin install frontend-design@claude-plugins-official
   impeccable: claude plugin marketplace add pbakaus/impeccable && claude plugin install impeccable@impeccable
   ui-ux-pro-max: claude plugin marketplace add nextlevelbuilder/ui-ux-pro-max-skill && claude plugin install ui-ux-pro-max@ui-ux-pro-max-skill
@@ -43,18 +42,8 @@ requires:
   threejs-postprocessing: npx skills add cloudai-x/threejs-skills@threejs-postprocessing
 ---
 
-## [always] responses
-MUST use /caveman for status updates and routine replies, /ponytail for code — house rules; smallest working diff, reuse before writing, stdlib/platform before libraries. When explaining design rationale or answering a judgment question, clarity outranks compression — drop caveman and answer plainly.
-Those two are the only mandatory skills. Every other skill this recipe names is optional reference, not a gate: open one when you expect it to change the result — an API you’d otherwise guess at, a domain where being wrong is expensive — and skip it when your own knowledge already covers the job. A build that invokes zero skills is normal, often the best-value one; the work is judged on what ships, not on which skills were opened. Never invoke a skill as ceremony, and never copy a skill’s example layouts or palettes — design from this recipe’s taste through your own judgment.
-
 ## [always] vibe
-This is a modern, very creative specialty coffee shop website. It must feel handcrafted and art-directed, never templated. Banned: generic AI-site look (purple gradients, emoji section headers, glassmorphism cards on hero, cookie-cutter three-column features). Direction: warm minimalism — cream/paper background, espresso browns, one electric accent (burnt orange or acid green); oversized editorial typography; grain/noise texture overlays; photography treated like a print magazine, not stock-photo grids. Every interaction should feel tactile, like pulling an espresso shot. This concept is the default, not a cage: when the user asks for a different concept or aesthetic, their request wins — keep the craft bar, the creative-risk rule, and the spirit of the bans, rebuild the identity around THEIR concept, and never land on the generic AI-site look (purple gradients, emoji section headers, glass cards, cookie-cutter grids).
-
-## [always] creativity
-Creative risk is a requirement, not a bonus. Every build gets at least one signature moment no template would have — an interaction, layout break, or detail someone would screenshot and share. If a layout or component is the first thing you'd produce by default, discard it and take your second, stranger idea. The vibe above is a starting point to push past, not a ceiling. Bold beats safe; specific beats generic; weird-but-intentional beats polished-but-forgettable.
-
-## [stack] kickoff
-Project-start ritual — applies ONLY if DESIGN.md does not exist in the repo root; skip entirely once it does. Before writing any product code, produce 3 concept directions that differ on EVERY axis: layout system, type pairing, palette, motion concept, signature interaction. Present each as a compact sheet — name, one-line concept, the five axes, and the one moment someone would screenshot. No two directions may share an axis value; if two feel even similar, throw one out and go stranger. Ask the user to pick (if unattended, pick the one that feels slightly risky). Write the winner into DESIGN.md as the project's design contract — every later prompt follows DESIGN.md and never silently drifts back to default instincts.
+This is a modern, very creative specialty coffee shop website. It must feel handcrafted and art-directed, never templated. Banned: generic AI-site look (purple gradients, emoji section headers, glassmorphism cards on hero, cookie-cutter three-column features). Direction: warm minimalism — cream/paper background, espresso browns, one electric accent (burnt orange or acid green); oversized editorial typography; grain/noise texture overlays; photography treated like a print magazine, not stock-photo grids. Every interaction should feel tactile, like pulling an espresso shot.
 
 ## [ui] design
 Craft reference if you want it: /ui-ux-pro-max, /frontend-design, and /web-design; an /impeccable pass on finished sections pays off. Follow DESIGN.md if it exists. After each finished page or section, run the generic-kill pass: name its most templated element and replace it with something specific to this shop before moving on. Typography: variable display serif (e.g. Fraunces) for headlines + grotesk (e.g. General Sans / Space Grotesk) for body, via next/font. Layout: asymmetric editorial grids and bento sections, oversized type that overlaps imagery, generous whitespace, sticky side labels. Menu/products as an art-directed spread, not a card grid. Full a11y basics always: focus states, contrast, semantic landmarks.
@@ -78,4 +67,4 @@ Correct schema and meta are non-negotiable; /seo is the reference — scale it t
 Keep it static wherever possible: menu/products as typed local data (MDX or JSON). Contact/order form via a Next.js server action. No database until a real ordering feature demands one. If real ordering or money ever lands, never hand-roll it — /ecommerce-kit is the house reference.
 
 ## [testing] checks
-Per /ponytail: one runnable check per non-trivial logic (cart math, form validation) — no test frameworks beyond node/jest already present, no snapshot suites. Verify animations by driving the page, not by unit-testing tweens.
+Cart math and form validation get the checks first. Verify animations by driving the page, not by unit-testing tweens.

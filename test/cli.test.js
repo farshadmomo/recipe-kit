@@ -1,7 +1,8 @@
 'use strict';
 const test = require('node:test');
 const assert = require('node:assert');
-const { execFileSync } = require('node:child_process');
+const { execFileSync, execFile } = require('node:child_process');
+const http = require('node:http');
 const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
@@ -280,4 +281,113 @@ test('setup with no active recipe says so', () => {
   const dir = tmpDir();
   run(dir, 'init');
   assert.match(run(dir, 'setup'), /no active recipe/);
+});
+
+// --- gh-relative extends (Phase A) ---
+// A local http server keyed by URL path stands in for raw.githubusercontent.com;
+// RECIPE_GH_BASE points fetchGh at it, so these tests never touch the network.
+// URL shape: /<user>/<repo>/HEAD/<file>  (bare gh:u/r defaults <file> to recipe.md).
+// The CLI is spawned with async execFile — execFileSync would block this process's
+// event loop and deadlock the in-process server (parent can't accept the child's socket).
+function runAsync(cwd, extraEnv, ...args) {
+  return new Promise((resolve, reject) => {
+    execFile(
+      process.execPath,
+      [CLI, ...args],
+      { cwd, encoding: 'utf8', env: { ...process.env, HOME: cwd, USERPROFILE: cwd, ...extraEnv } },
+      (err, stdout, stderr) => {
+        if (err) {
+          err.stdout = stdout;
+          err.stderr = stderr;
+          return reject(err);
+        }
+        resolve(stdout);
+      }
+    );
+  });
+}
+
+async function withGhServer(fixtures, fn) {
+  const server = http.createServer((req, res) => {
+    const body = fixtures[req.url];
+    if (body === undefined) {
+      res.statusCode = 404;
+      res.end('not found');
+      return;
+    }
+    res.statusCode = 200;
+    res.end(body);
+  });
+  await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+  try {
+    return await fn(`http://127.0.0.1:${server.address().port}`);
+  } finally {
+    server.close();
+  }
+}
+
+async function assertRejects(promise, stderrRe) {
+  try {
+    await promise;
+    assert.fail('expected the command to exit nonzero');
+  } catch (e) {
+    assert.equal(e.code, 1);
+    if (stderrRe) assert.match(String(e.stderr), stderrRe);
+  }
+}
+
+test('gh: relative extends fetches a sibling in the same repo', async () => {
+  const dir = tmpDir();
+  run(dir, 'init');
+  await withGhServer(
+    {
+      '/u/r/HEAD/child.md': '---\nname: ghchild\nextends: [./core.md]\n---\n\n## [ui] design\nchild design\n',
+      '/u/r/HEAD/core.md': '---\nname: ghcore\n---\n\n## [always] base\ncore base body\n',
+    },
+    async (base) => {
+      await runAsync(dir, { RECIPE_GH_BASE: base }, 'use', 'gh:u/r/child.md');
+      const flat = fs.readFileSync(path.join(dir, '.claude', 'recipes', 'ghchild.md'), 'utf8');
+      assert.match(flat, /core base body/); // parent sibling merged in
+      assert.match(flat, /child design/);
+    }
+  );
+});
+
+test('gh: relative extends that escapes the repo is a bad ref', async () => {
+  const dir = tmpDir();
+  run(dir, 'init');
+  await withGhServer(
+    { '/u/r/HEAD/child.md': '---\nname: ghchild\nextends: [../../escape.md]\n---\n\n## [ui] design\nx\n' },
+    (base) => assertRejects(runAsync(dir, { RECIPE_GH_BASE: base }, 'use', 'gh:u/r/child.md'), /bad ref/i)
+  );
+});
+
+test('gh: cross-form self-extends (gh:u/r ≡ gh:u/r/recipe.md) is caught as circular', async () => {
+  const dir = tmpDir();
+  run(dir, 'init');
+  await withGhServer(
+    { '/u/r/HEAD/recipe.md': '---\nname: ghc\nextends: [gh:u/r]\n---\n\n## [always] x\nbody\n' },
+    (base) => assertRejects(runAsync(dir, { RECIPE_GH_BASE: base }, 'use', 'gh:u/r/recipe.md'), /circular/i)
+  );
+});
+
+test('gh: diamond extends resolves (not a false cycle)', async () => {
+  const dir = tmpDir();
+  run(dir, 'init');
+  await withGhServer(
+    {
+      '/u/r/HEAD/r.md': '---\nname: ghr\nextends: [./a.md, ./b.md]\n---\n\n## [always] r\nr body\n',
+      '/u/r/HEAD/a.md': '---\nname: gha\nextends: [./c.md]\n---\n\n## [ui] a\na body\n',
+      '/u/r/HEAD/b.md': '---\nname: ghb\nextends: [./c.md]\n---\n\n## [stack] b\nb body\n',
+      '/u/r/HEAD/c.md': '---\nname: ghc\n---\n\n## [always] x\nbase body\n',
+    },
+    async (base) => {
+      await runAsync(dir, { RECIPE_GH_BASE: base }, 'use', 'gh:u/r/r.md');
+      const flat = fs.readFileSync(path.join(dir, '.claude', 'recipes', 'ghr.md'), 'utf8');
+      assert.match(flat, /a body/);
+      assert.match(flat, /b body/);
+      assert.match(flat, /r body/);
+      assert.match(flat, /base body/); // shared grandparent merged once
+    }
+  );
 });

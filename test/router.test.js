@@ -53,9 +53,28 @@ test('matching is word-boundary and case-insensitive', () => {
 });
 
 test('default routes cover the built-in channels', () => {
-  for (const ch of ['ui', 'animation', 'stack', 'backend', 'testing']) {
+  for (const ch of ['ui', 'animation', 'stack', 'backend', 'testing', 'copy', 'docs']) {
     assert.ok(Array.isArray(DEFAULT_ROUTES[ch]) && DEFAULT_ROUTES[ch].length > 0, ch);
   }
+});
+
+test('copy and docs channels fire on their default keywords', () => {
+  const recipe = parseRecipe(
+    '---\nname: t\n---\n\n## [copy] words\nx\n\n## [docs] pages\ny\n'
+  );
+  const names = (p) => selectIngredients(recipe, p).map((i) => i.name);
+  assert.deepEqual(names('punch up the tagline'), ['words']);
+  assert.deepEqual(names('rewrite the microcopy'), ['words']);
+  assert.deepEqual(names('update the readme'), ['pages']);
+  assert.deepEqual(names('write a migration guide'), ['pages']);
+});
+
+test('copy fires on "copy the file" — the accepted, documented false positive', () => {
+  const recipe = parseRecipe('---\nname: t\n---\n\n## [copy] words\nx\n');
+  assert.deepEqual(
+    selectIngredients(recipe, 'copy the file into dist').map((i) => i.name),
+    ['words']
+  );
 });
 
 test('renderContext wraps ingredients in a recipe tag', () => {

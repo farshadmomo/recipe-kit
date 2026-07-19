@@ -13,12 +13,13 @@ const { resolveRecipe, ghDir, rebaseGh } = require('../src/resolver');
 async function main() {
   const [cmd, ...rest] = process.argv.slice(2);
   const arg = rest.join(' ');
-  const commands = { init, use, list, off, new: scaffold, test: testPrompt, lint, reload, setup };
+  const commands = { init, use, list, off, new: scaffold, test: testPrompt, lint, reload, setup, discover, export: exportRecipe };
   if (!cmd || !Object.hasOwn(commands, cmd)) {
-    console.log('usage: recipe <init | use <ref> | list | off | new | test <prompt> | lint [ref] | reload | setup [--yes]>');
+    console.log('usage: recipe <init | use <ref> | list | off | new | test <prompt> | lint [ref] | discover | export [--out file] | reload | setup [--yes]>');
     process.exit(cmd ? 1 : 0);
   }
-  await commands[cmd](arg);
+  // rest (raw arg array) lets export read --out; other commands ignore it.
+  await commands[cmd](arg, rest);
 }
 
 function init() {
@@ -231,6 +232,132 @@ async function lint(ref) {
   for (const w of warnings) console.log(`warn: ${w}`);
   if (!errors.length && !warnings.length) console.log(`recipe: ${recipe.meta.name} — clean`);
   if (errors.length) process.exit(1);
+}
+
+// Curated words deliberately NOT in any route, grouped by the channel they'd
+// belong to. discover suggests promoting them when they recur in prompts that
+// currently fire nothing.
+const SYNONYMS = {
+  ui: ['screen', 'view', 'widget', 'panel', 'interface'],
+  animation: ['bounce', 'slide', 'fade', 'spin', 'wiggle'],
+  backend: ['login', 'signup', 'query', 'route', 'storage'],
+  testing: ['verify', 'check', 'assert'],
+  copy: ['reword', 'phrase', 'rewrite'],
+  docs: ['explain', 'document'],
+};
+
+// Offline route-tuning report: replay this project's past prompts against the
+// active recipe's routes and show what fired, what didn't, and which near-miss
+// keywords keep showing up. ponytail: the whole feature is a word-frequency
+// heuristic over local transcripts — no LLM, no network.
+function discover() {
+  const { hit } = require('../src/router');
+  const slug = process.cwd().replace(/[^A-Za-z0-9]/g, '-');
+  const dir = path.join(os.homedir(), '.claude', 'projects', slug);
+  if (!fs.existsSync(dir)) {
+    console.log('recipe: no transcripts found for this project');
+    return;
+  }
+  const { activeRecipeFile } = require('../src/recipe-hook');
+  const { parseRecipe } = require('../src/parser');
+  const { DEFAULT_ROUTES } = require('../src/router');
+  const file = activeRecipeFile(process.cwd());
+  if (!file || !fs.existsSync(file)) {
+    console.log('recipe: no active recipe — run: recipe use <ref>');
+    return;
+  }
+  const recipe = parseRecipe(fs.readFileSync(file, 'utf8'));
+  const routes = { ...DEFAULT_ROUTES, ...recipe.meta.routes };
+  const channels = [...new Set(recipe.ingredients.map((i) => i.tag).filter((t) => t !== 'always'))];
+
+  const prompts = [];
+  for (const f of fs.readdirSync(dir).filter((f) => f.endsWith('.jsonl'))) {
+    for (const line of fs.readFileSync(path.join(dir, f), 'utf8').split(/\r?\n/)) {
+      if (!line.trim()) continue;
+      let obj;
+      try { obj = JSON.parse(line); } catch { continue; }
+      if (obj.type !== 'user' || obj.isMeta) continue;
+      const c = obj.message && obj.message.content;
+      let text = typeof c === 'string'
+        ? c
+        : Array.isArray(c)
+          ? c.filter((p) => p && p.type === 'text').map((p) => p.text).join(' ')
+          : '';
+      text = text.trim();
+      if (!text || text.startsWith('<') || text.startsWith('/')) continue;
+      prompts.push(text);
+    }
+  }
+
+  const fired = Object.fromEntries(channels.map((ch) => [ch, 0]));
+  const zeroFire = [];
+  for (const text of prompts) {
+    let any = false;
+    for (const ch of channels) {
+      if (hit(routes, ch, text)) { fired[ch]++; any = true; }
+    }
+    if (!any) zeroFire.push(text);
+  }
+
+  console.log(`recipe: ${recipe.meta.name}`);
+  console.log(`${prompts.length} prompts scanned`);
+  for (const ch of channels) {
+    const pct = prompts.length ? Math.round((fired[ch] / prompts.length) * 100) : 0;
+    console.log(`  ${ch}: fired ${fired[ch]} (${pct}%)`);
+  }
+  console.log(`${zeroFire.length} prompts fired nothing beyond [always]`);
+
+  // Near-miss: which off-route words recur in zero-fire prompts?
+  const counts = {}; // ch -> { word -> n }
+  const snippets = [];
+  for (const text of zeroFire) {
+    let near = false;
+    for (const ch of Object.keys(SYNONYMS)) {
+      if (!hit(SYNONYMS, ch, text)) continue;
+      near = true;
+      counts[ch] = counts[ch] || {};
+      for (const w of SYNONYMS[ch]) {
+        if (hit({ _: [w] }, '_', text)) counts[ch][w] = (counts[ch][w] || 0) + 1;
+      }
+    }
+    if (near && snippets.length < 10) snippets.push(text.slice(0, 80));
+  }
+  if (snippets.length) {
+    console.log('\nnear-misses (prompts that fired nothing but mention off-route keywords):');
+    for (const s of snippets) console.log(`  · ${s}`);
+  }
+  for (const ch of Object.keys(counts)) {
+    const words = Object.entries(counts[ch])
+      .filter(([, n]) => n >= 2)
+      .sort((a, b) => b[1] - a[1])
+      .map(([w]) => w);
+    if (words.length) console.log(`suggest: routes.${ch} += ${words.join(', ')}`);
+  }
+}
+
+// Flatten the active recipe to plain markdown — every ingredient, no routing,
+// no <recipe> wrapper, no skill line — for pasting into AGENTS.md / Cursor rules.
+function exportRecipe(arg, rest) {
+  const { activeRecipeFile } = require('../src/recipe-hook');
+  const { parseRecipe } = require('../src/parser');
+  const file = activeRecipeFile(process.cwd());
+  if (!file || !fs.existsSync(file)) {
+    console.log('recipe: no active recipe');
+    return;
+  }
+  const recipe = parseRecipe(fs.readFileSync(file, 'utf8'));
+  const lines = [`# ${recipe.meta.name}`];
+  if (recipe.meta.description) lines.push('', recipe.meta.description);
+  for (const i of recipe.ingredients) lines.push('', `## ${i.name}`, '', i.body);
+  const md = lines.join('\n') + '\n';
+  const outIdx = rest.indexOf('--out');
+  const out = outIdx >= 0 ? rest[outIdx + 1] : null;
+  if (out) {
+    fs.writeFileSync(out, md);
+    console.log(`recipe: exported to ${out}`);
+  } else {
+    process.stdout.write(md);
+  }
 }
 
 function fetchGh(ref) {

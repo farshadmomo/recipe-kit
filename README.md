@@ -190,6 +190,8 @@ Next.js + Tailwind CSS. No other CSS frameworks.
 | `recipe new`                                    | Scaffold a starter `recipe.md` (creative-web defaults)                    |
 | `recipe test <prompt>`                          | Show which ingredients would inject for a prompt (`+`/`-` per ingredient) |
 | `recipe lint [ref]`                             | Check a recipe for unroutable tags, bad `requires:`, and dead routes (exit 1 on errors) |
+| `recipe discover`                               | Replay this project's past prompts against the active recipe; report per-channel fire-rates and suggest missing keywords |
+| `recipe export [--out file]`                    | Flatten the active recipe to plain markdown (every ingredient, no routing) for AGENTS.md / Cursor rules |
 | `recipe reload`                                 | Re-install the active recipe from its recorded source after edits         |
 | `recipe setup [--yes]`                          | List required skills that aren't installed; `--yes` runs their install commands |
 
@@ -203,6 +205,21 @@ network, fails open — a broken recipe never blocks a prompt.
 
 Frontmatter is a YAML subset: `key: value`, `key: [flow, lists]`, and
 one-level nested maps of flow lists or scalars.
+
+## Portability
+
+A recipe is compiled for Claude Code's routing, but the taste inside it isn't
+Claude-specific. `recipe export` flattens the active recipe to plain markdown —
+`# name`, description, then every ingredient as a `## heading` with its body, no
+routing, no skill lines, no `<recipe>` wrapper:
+
+```bash
+recipe export > AGENTS.md          # or --out for the file directly
+recipe export --out .cursor/rules/house-style.md
+```
+
+The result reads as a standalone style guide you can paste into `AGENTS.md`,
+Cursor rules, or a system prompt — the same house style, minus the machinery.
 
 ## Writing a good recipe
 
@@ -263,6 +280,13 @@ Hard-won from dogfooding:
 - **Verify what's active before judging results.** `recipe list` shows `*`
   beside the active recipe; `recipe test "your prompt"` shows exactly which
   ingredients fire for it.
+- **Routing is keyword matching, so tune it.** `recipe discover` replays this
+  project's past Claude Code prompts (from `~/.claude/projects/`) against the
+  active recipe and reports how often each channel fired. Prompts that fired
+  nothing but mention an off-route synonym (e.g. "bounce" for `animation`,
+  "login" for `backend`) surface as near-misses, with `routes.<ch> += word`
+  suggestions when a word recurs. Offline, no LLM — a word-frequency heuristic,
+  not intent understanding, so treat the suggestions as leads to eyeball.
 - **One recipe is active at a time.** Project `.claude/recipes/` beats global
   `~/.claude/recipes/`.
 - **Hook error mentioning `cjs/loader`?** The hook script wasn't found —

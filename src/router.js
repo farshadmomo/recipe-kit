@@ -55,4 +55,4 @@ function renderContext(recipe, ingredients, prompt) {
   return `<recipe name="${recipe.meta.name}">\n${body}${line ? `\n\n${line}` : ''}\n</recipe>`;
 }
 
-module.exports = { DEFAULT_ROUTES, selectIngredients, skillLine, renderContext };
+module.exports = { DEFAULT_ROUTES, hit, selectIngredients, skillLine, renderContext };

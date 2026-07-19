@@ -271,6 +271,39 @@ test('reload without a recorded source fails cleanly', () => {
   assertFails(() => run(dir, 'reload'), /no source recorded/);
 });
 
+// --- export (Phase G) --- plain markdown of every ingredient, no routing/wrapper.
+test('export prints every ingredient (incl. non-always) with no <recipe wrapper', () => {
+  const dir = tmpDir();
+  run(dir, 'init');
+  fs.writeFileSync(path.join(dir, 'r.md'), BASE);
+  run(dir, 'use', './r.md');
+  const out = run(dir, 'export');
+  assert.match(out, /^# base-modern/m);
+  assert.match(out, /## responses/); // [always] ingredient
+  assert.match(out, /Use \/caveman\./);
+  assert.match(out, /## design/); // non-always [ui] ingredient
+  assert.match(out, /parent design/);
+  assert.doesNotMatch(out, /<recipe/); // no wrapper
+  assert.doesNotMatch(out, /\[always\]/); // plain headings, no tags
+});
+
+test('export --out writes identical content to a file', () => {
+  const dir = tmpDir();
+  run(dir, 'init');
+  fs.writeFileSync(path.join(dir, 'r.md'), BASE);
+  run(dir, 'use', './r.md');
+  const stdout = run(dir, 'export');
+  run(dir, 'export', '--out', 'style.md');
+  const written = fs.readFileSync(path.join(dir, 'style.md'), 'utf8');
+  assert.equal(written, stdout);
+});
+
+test('export with no active recipe says so', () => {
+  const dir = tmpDir();
+  run(dir, 'init');
+  assert.match(run(dir, 'export'), /no active recipe/);
+});
+
 test('new scaffolds recipe.md that parses, and refuses to overwrite', () => {
   const dir = tmpDir();
   run(dir, 'new');

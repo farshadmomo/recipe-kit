@@ -8,13 +8,14 @@ const RECIPES_DIR = path.join('.claude', 'recipes');
 const HOOK_DIR = path.join('.claude', 'hooks', 'recipe');
 const HOOK_CMD = 'node "${CLAUDE_PROJECT_DIR:-.}/.claude/hooks/recipe/recipe-hook.js"';
 const SRC = path.join(__dirname, '..', 'src');
+const { resolveRecipe, ghDir, rebaseGh } = require('../src/resolver');
 
 async function main() {
   const [cmd, ...rest] = process.argv.slice(2);
   const arg = rest.join(' ');
-  const commands = { init, use, list, off, new: scaffold, test: testPrompt, reload, setup };
+  const commands = { init, use, list, off, new: scaffold, test: testPrompt, lint, reload, setup };
   if (!cmd || !Object.hasOwn(commands, cmd)) {
-    console.log('usage: recipe <init | use <ref> | list | off | new | test <prompt> | reload | setup [--yes]>');
+    console.log('usage: recipe <init | use <ref> | list | off | new | test <prompt> | lint [ref] | reload | setup [--yes]>');
     process.exit(cmd ? 1 : 0);
   }
   await commands[cmd](arg);
@@ -23,7 +24,8 @@ async function main() {
 function init() {
   fs.mkdirSync(RECIPES_DIR, { recursive: true });
   fs.mkdirSync(HOOK_DIR, { recursive: true });
-  for (const f of ['parser.js', 'router.js', 'recipe-hook.js']) {
+  // resolver.js rides along so the hook can auto-reload edited local sources.
+  for (const f of ['parser.js', 'router.js', 'recipe-hook.js', 'resolver.js']) {
     fs.copyFileSync(path.join(SRC, f), path.join(HOOK_DIR, f));
   }
   const settingsPath = path.join('.claude', 'settings.json');
@@ -51,7 +53,7 @@ function init() {
 
 async function use(ref) {
   if (!ref) throw new Error('usage: recipe use <gh:user/repo[/path] | ./file.md>');
-  const recipe = await resolveRecipe(ref, process.cwd(), new Set());
+  const recipe = await resolveRecipe(ref, process.cwd(), new Set(), fetchGh);
   const { serializeRecipe } = require('../src/parser');
   fs.mkdirSync(RECIPES_DIR, { recursive: true });
   const file = `${recipe.meta.name}.md`;
@@ -162,56 +164,73 @@ function testPrompt(prompt) {
   if (line) console.log(line);
 }
 
-// gh:u/r/recipes/x.md → gh:u/r/recipes; bare gh:u/r → itself (the repo IS the dir).
-function ghDir(ref) {
-  const parts = ref.slice(3).split('/');
-  return parts.length <= 2 ? ref : `gh:${parts.slice(0, -1).join('/')}`;
-}
-
-// Resolve a relative extends against a gh: base, staying inside the repo.
-// path.posix so Windows backslashes never leak into the raw URL.
-function rebaseGh(ghBase, rel) {
-  const joined = path.posix.normalize(path.posix.join(ghBase.slice(3), rel));
-  if (joined.startsWith('..') || joined.split('/').length < 2) {
-    throw new Error(`bad ref: ${rel} escapes ${ghBase}`);
-  }
-  return `gh:${joined}`;
-}
-
-// Cycle key: gh:u/r and gh:u/r/recipe.md fetch the same file — canonicalize both.
-function resolveKey(ref, baseDir) {
-  if (!ref.startsWith('gh:')) return path.resolve(baseDir, ref);
-  const parts = ref.slice(3).split('/');
-  return parts.length === 2 ? `${ref}/recipe.md` : ref;
-}
-
-// Later extends entries override earlier ones; the recipe itself overrides all.
-async function resolveRecipe(ref, baseDir, seen) {
-  const { parseRecipe, mergeRecipes } = require('../src/parser');
-  const key = resolveKey(ref, baseDir);
-  if (seen.has(key)) throw new Error(`circular extends via ${ref}`);
-  seen.add(key);
-  let text, nextBase;
-  if (ref.startsWith('gh:')) {
-    text = await fetchGh(ref);
-    nextBase = ghDir(ref); // gh base — relative extends rebase against it below
+// Static-analyze a recipe: explicit ref → full resolve (extends + gh:); else the
+// active flattened recipe; else ./recipe.md. Errors (unroutable tag/channel, bad
+// requires) exit 1; warnings never do. Errors print to stderr, warnings to stdout.
+async function lint(ref) {
+  const { parseRecipe } = require('../src/parser');
+  const { DEFAULT_ROUTES } = require('../src/router');
+  let recipe;
+  if (ref) {
+    recipe = await resolveRecipe(ref, process.cwd(), new Set(), fetchGh);
   } else {
-    const abs = path.resolve(baseDir, ref);
-    text = fs.readFileSync(abs, 'utf8');
-    nextBase = path.dirname(abs);
-  }
-  const recipe = parseRecipe(text);
-  let acc = null;
-  for (let parentRef of recipe.meta.extends) {
-    // inside a gh recipe, a relative extends stays inside the repo via the gh base
-    if (nextBase.startsWith('gh:') && !parentRef.startsWith('gh:') && !path.isAbsolute(parentRef)) {
-      parentRef = rebaseGh(nextBase, parentRef);
+    const { activeRecipeFile } = require('../src/recipe-hook');
+    const active = activeRecipeFile(process.cwd());
+    const file = active && fs.existsSync(active) ? active : fs.existsSync('recipe.md') ? 'recipe.md' : null;
+    if (!file) {
+      console.log('recipe: nothing to lint (no ref, no active recipe, no ./recipe.md)');
+      return;
     }
-    const parent = await resolveRecipe(parentRef, nextBase, seen);
-    acc = acc ? mergeRecipes(acc, parent) : parent;
+    recipe = parseRecipe(fs.readFileSync(file, 'utf8'));
   }
-  seen.delete(key); // path-based cycle check: keep only the current ancestor chain, so diamonds resolve
-  return acc ? mergeRecipes(acc, recipe) : recipe;
+
+  const routes = { ...DEFAULT_ROUTES, ...(recipe.meta.routes || {}) };
+  const skills = recipe.meta.skills || {};
+  const requires = recipe.meta.requires || {};
+  const errors = [];
+  const warnings = [];
+
+  for (const i of recipe.ingredients) {
+    if (i.tag !== 'always' && !routes[i.tag]) {
+      errors.push(`ingredient [${i.tag}] "${i.name}" has no route — it can never inject`);
+    }
+  }
+  for (const ch of Object.keys(skills)) {
+    if (ch !== 'always' && !routes[ch]) errors.push(`skills channel "${ch}" has no route`);
+  }
+  for (const [name, cmd] of Object.entries(requires)) {
+    if (typeof cmd !== 'string' || !cmd.trim()) {
+      errors.push(`requires "${name}" has an empty or non-string install command`);
+    }
+  }
+
+  for (const [ch, names] of Object.entries(skills)) {
+    for (const n of names) {
+      if (!Object.hasOwn(requires, n)) warnings.push(`skill "${n}" (channel "${ch}") is not in requires:`);
+    }
+  }
+  const alwaysWords = recipe.ingredients
+    .filter((i) => i.tag === 'always')
+    .reduce((n, i) => n + i.body.split(/\s+/).filter(Boolean).length, 0);
+  if (alwaysWords > 500) {
+    warnings.push(`[always] bodies total ${alwaysWords} words — they ride every prompt, keep them lean`);
+  }
+  const seen = new Set();
+  for (const i of recipe.ingredients) {
+    if (seen.has(i.name)) warnings.push(`duplicate ingredient name "${i.name}"`);
+    seen.add(i.name);
+  }
+  // dead route: only channels the recipe itself declares (not defaults) with no
+  // [tag] ingredient and no skills: entry to fire them.
+  const tags = new Set(recipe.ingredients.map((i) => i.tag));
+  for (const ch of Object.keys(recipe.meta.routes || {})) {
+    if (!tags.has(ch) && !skills[ch]) warnings.push(`route "${ch}" fires nothing — no [${ch}] ingredient or skills: entry`);
+  }
+
+  for (const e of errors) console.error(`error: ${e}`);
+  for (const w of warnings) console.log(`warn: ${w}`);
+  if (!errors.length && !warnings.length) console.log(`recipe: ${recipe.meta.name} — clean`);
+  if (errors.length) process.exit(1);
 }
 
 function fetchGh(ref) {

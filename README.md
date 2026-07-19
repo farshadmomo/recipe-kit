@@ -189,13 +189,14 @@ Next.js + Tailwind CSS. No other CSS frameworks.
 | `recipe off`                                    | Deactivate (keeps files)                                                  |
 | `recipe new`                                    | Scaffold a starter `recipe.md` (creative-web defaults)                    |
 | `recipe test <prompt>`                          | Show which ingredients would inject for a prompt (`+`/`-` per ingredient) |
+| `recipe lint [ref]`                             | Check a recipe for unroutable tags, bad `requires:`, and dead routes (exit 1 on errors) |
 | `recipe reload`                                 | Re-install the active recipe from its recorded source after edits         |
 | `recipe setup [--yes]`                          | List required skills that aren't installed; `--yes` runs their install commands |
 
 ## How it works
 
 `recipe init` registers a `UserPromptSubmit` hook and copies a self-contained
-script trio into `.claude/hooks/recipe/`. On every prompt the hook keyword-
+set of scripts into `.claude/hooks/recipe/`. On every prompt the hook keyword-
 matches your prompt against each channel, then injects only the matching
 ingredients wrapped in `<recipe name="...">…</recipe>`. No LLM call, no
 network, fails open — a broken recipe never blocks a prompt.
@@ -254,8 +255,11 @@ Hard-won from dogfooding:
 
 ## Gotchas
 
-- **`recipe use` installs a snapshot.** Editing your source `recipe.md` does
-  _not_ update the active copy — run `recipe reload` after every edit.
+- **Local sources auto-refresh.** Editing the `./recipe.md` you `recipe use`d
+  re-flattens the active copy on your next prompt — no `recipe reload` needed.
+  `recipe reload` is still required for `gh:` sources, after renaming the source
+  file, and after editing a _parent_ that a local recipe `extends` (only the
+  root source's timestamp is watched).
 - **Verify what's active before judging results.** `recipe list` shows `*`
   beside the active recipe; `recipe test "your prompt"` shows exactly which
   ingredients fire for it.
@@ -283,7 +287,7 @@ Hard-won from dogfooding:
 ```bash
 git clone https://github.com/farshadmomo/recipe-kit
 cd recipe-kit && npm link   # makes `recipe` point at your working copy
-node --test                 # 82 tests, zero dependencies
+node --test                 # 107 tests, zero dependencies
 ```
 
 Zero runtime and dev dependencies. Node ≥18, CommonJS. Design notes and the

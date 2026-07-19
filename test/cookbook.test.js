@@ -1,10 +1,14 @@
 'use strict';
 const test = require('node:test');
 const assert = require('node:assert');
+const { execFileSync } = require('node:child_process');
 const fs = require('node:fs');
 const path = require('node:path');
 const { resolveRecipe } = require('../bin/recipe');
 const { DEFAULT_ROUTES, skillLine } = require('../src/router');
+
+const CLI = path.join(__dirname, '..', 'bin', 'recipe.js');
+const REPO = path.join(__dirname, '..');
 
 // Flatten every shipped recipe through the real resolver (extends + merge) and
 // assert the invariants the cookbook depends on. Local-only: no recipe here
@@ -61,6 +65,17 @@ test('cookbook: creative-core defines the base blocks it hands down', async () =
   // the base has no ui skills of its own — nothing to nudge
   assert.ok(!(core.meta.skills && core.meta.skills.ui));
 });
+
+// Every shipped recipe must lint with zero errors (lint exits 1 on any error;
+// execFileSync throws on nonzero exit). This is the real validation gate.
+for (const file of FILES) {
+  test(`cookbook: ${file} lints with zero errors`, () => {
+    execFileSync(process.execPath, [CLI, 'lint', './recipes/' + file], {
+      cwd: REPO,
+      encoding: 'utf8',
+    });
+  });
+}
 
 test('cookbook: api overrides the base kickoff by name', async () => {
   const api = await resolveRecipe('./api.md', RECIPES_DIR, new Set());

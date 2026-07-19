@@ -18,7 +18,26 @@ function activeRecipeFile(cwd) {
   return null;
 }
 
-function main() {
+// Local sources auto-refresh: if the recipe's source file is newer than the
+// installed snapshot, re-flatten it in place. ponytail: rewrites the installed
+// snapshot only — never the active/source pointers, so a source *rename* still
+// needs `recipe reload`. And only the root source's mtime is checked, not its
+// extended parents' — edit a parent, then reload (or touch the child).
+async function maybeReload(installed) {
+  const src = fs.readFileSync(path.join(path.dirname(installed), 'source'), 'utf8').trim();
+  // gh:/mkt: sources keep snapshot semantics; path.isAbsolute cleanly rejects
+  // them on both platforms (local sources are always path.resolve'd by `use`).
+  if (!path.isAbsolute(src)) return;
+  if (fs.statSync(src).mtimeMs <= fs.statSync(installed).mtimeMs) return;
+  const { resolveRecipe } = require('./resolver');
+  const { serializeRecipe } = require('./parser');
+  // fetchRemote=null: a local source that extends a gh: parent throws here, so
+  // the caller falls open to the existing snapshot rather than networking.
+  const recipe = await resolveRecipe(src, path.dirname(src), new Set(), null);
+  fs.writeFileSync(installed, serializeRecipe(recipe));
+}
+
+async function main() {
   let parseRecipe, DEFAULT_ROUTES, selectIngredients, renderContext;
   try {
     ({ parseRecipe } = require('./parser'));
@@ -37,6 +56,12 @@ function main() {
   const cwd = process.env.CLAUDE_PROJECT_DIR || payload.cwd || process.cwd();
   const file = activeRecipeFile(cwd);
   if (!file || !fs.existsSync(file)) return;
+
+  try {
+    await maybeReload(file);
+  } catch {
+    // fail open: missing source, gh: parent, parse/IO error — serve the snapshot.
+  }
 
   let recipe;
   try {

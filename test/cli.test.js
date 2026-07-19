@@ -31,11 +31,11 @@ function runWithEnv(cwd, extraEnv, ...args) {
   });
 }
 
-test('init creates dirs, copies hook trio, registers hook', () => {
+test('init creates dirs, copies hook scripts, registers hook', () => {
   const dir = tmpDir();
   run(dir, 'init');
   assert.ok(fs.existsSync(path.join(dir, '.claude', 'recipes')));
-  for (const f of ['parser.js', 'router.js', 'recipe-hook.js']) {
+  for (const f of ['parser.js', 'router.js', 'recipe-hook.js', 'resolver.js']) {
     assert.ok(fs.existsSync(path.join(dir, '.claude', 'hooks', 'recipe', f)), f);
   }
   const settings = JSON.parse(
@@ -211,6 +211,47 @@ test('test with no active recipe says so', () => {
   const dir = tmpDir();
   run(dir, 'init');
   assert.match(run(dir, 'test', 'anything'), /no active recipe/);
+});
+
+// --- lint (Phase D) --- errors → stderr + exit 1; warnings → stdout + exit 0.
+test('lint passes a clean recipe (exit 0)', () => {
+  const dir = tmpDir();
+  run(dir, 'init');
+  fs.writeFileSync(path.join(dir, 'r.md'), BASE); // [always] + [ui] (default-routed), no skills/requires
+  const out = run(dir, 'lint', './r.md'); // execFileSync throws on nonzero exit
+  assert.match(out, /clean/);
+});
+
+test('lint flags an unrouted ingredient tag (exit 1 + message)', () => {
+  const dir = tmpDir();
+  run(dir, 'init');
+  fs.writeFileSync(path.join(dir, 'r.md'), '---\nname: broken\n---\n\n## [always] a\nbody\n\n## [nope] orphan\nbody\n');
+  assertFails(() => run(dir, 'lint', './r.md'), /no route/);
+});
+
+test('lint warns without failing on a dead route (exit 0)', () => {
+  const dir = tmpDir();
+  run(dir, 'init');
+  // declares a `ghost` route but no [ghost] ingredient and no skills: entry fires it
+  fs.writeFileSync(path.join(dir, 'r.md'), '---\nname: warns\nroutes:\n  ghost: [nothing, here]\n---\n\n## [always] a\nbody\n');
+  const out = run(dir, 'lint', './r.md');
+  assert.match(out, /warn:.*ghost/);
+});
+
+test('lint resolves extends so a parent-declared route covers a child tag', () => {
+  const dir = tmpDir();
+  run(dir, 'init');
+  // [special] is unrouted in the child alone, routed by the parent — lint must
+  // fully resolve extends (exit 0), not just parse the child (would exit 1).
+  fs.writeFileSync(path.join(dir, 'lparent.md'), '---\nname: lparent\nroutes:\n  special: [special, magic]\n---\n\n## [always] a\nbody\n');
+  fs.writeFileSync(path.join(dir, 'lchild.md'), '---\nname: lchild\nextends: [./lparent.md]\n---\n\n## [special] thing\nbody\n');
+  run(dir, 'lint', './lchild.md'); // throws if it exits 1
+});
+
+test('lint with no ref, no active recipe, no ./recipe.md prints a clean message', () => {
+  const dir = tmpDir();
+  run(dir, 'init');
+  assert.match(run(dir, 'lint'), /nothing to lint/i);
 });
 
 test('reload re-installs from the recorded source', () => {

@@ -40,11 +40,13 @@ recipe test "build a hero section"   # see what would inject
 
 The recipe is yours to write — `recipe new` gives you a starting structure,
 not a style. Or borrow someone else's taste from any public repo with a
-`recipe.md` at its root (or a path to one):
+`recipe.md` at its root (or a path to one), or from the marketplace by slug:
 
 ```bash
 recipe use gh:someuser/their-repo                        # their root recipe.md
 recipe use gh:farshadmomo/recipe-kit/recipes/coffee.md   # an example from below
+recipe search coffee                                      # browse the marketplace
+recipe use mkt:coffee-creative                            # install one by slug
 ```
 
 ## Cookbook (examples)
@@ -184,7 +186,9 @@ Next.js + Tailwind CSS. No other CSS frameworks.
 | Command                                         | What it does                                                              |
 | ----------------------------------------------- | ------------------------------------------------------------------------- |
 | `recipe init`                                   | Install the hook + `.claude/recipes/` (idempotent)                        |
-| `recipe use <gh:user/repo[/path] \| ./file.md>` | Install + activate a recipe                                               |
+| `recipe use <gh:user/repo[/path] \| mkt:slug \| ./file.md>` | Install + activate a recipe                                    |
+| `recipe search <term>`                          | Search the marketplace; prints installable `mkt:` slugs                   |
+| `recipe publish`                                | Open the marketplace publish page in a browser                           |
 | `recipe list`                                   | Show installed recipes (`*` = active)                                     |
 | `recipe off`                                    | Deactivate (keeps files)                                                  |
 | `recipe new`                                    | Scaffold a starter `recipe.md` (creative-web defaults)                    |
@@ -298,6 +302,9 @@ Hard-won from dogfooding:
 
 - `gh:` refs fetch from `raw.githubusercontent.com` unauthenticated, so
   **private repos don't work** — publish a cookbook publicly to share it.
+- `recipe search` and `mkt:` refs need the marketplace's public API
+  (`recipe-kit-marketplace.vercel.app`); point elsewhere with `RECIPE_MKT_BASE`.
+  Both fail cleanly with a nonzero exit if the endpoints aren't reachable.
 - Routing is plain keyword matching, not intent understanding. A prompt that
   never says "scroll" or "animate" won't pull the animation channel, however
   animated the result should be.
@@ -311,7 +318,7 @@ Hard-won from dogfooding:
 ```bash
 git clone https://github.com/farshadmomo/recipe-kit
 cd recipe-kit && npm link   # makes `recipe` point at your working copy
-node --test                 # 107 tests, zero dependencies
+node --test                 # 120 tests, zero dependencies
 ```
 
 Zero runtime and dev dependencies. Node ≥18, CommonJS. Design notes and the

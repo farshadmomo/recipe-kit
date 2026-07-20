@@ -465,3 +465,82 @@ test('gh: diamond extends resolves (not a false cycle)', async () => {
     }
   );
 });
+
+// --- marketplace bridge (Phase E) ---
+// Same in-process http server (keyed by URL path); RECIPE_MKT_BASE points the
+// mkt: fetcher and `search` at it. Raw recipes: /api/recipes/<slug>/raw.
+// Search: /api/recipes?q=<term>.
+test('search prints installable rows from the marketplace', async () => {
+  const dir = tmpDir();
+  await withGhServer(
+    {
+      '/api/recipes?q=coffee': JSON.stringify([
+        { slug: 'coffee-x', name: 'Coffee X', description: 'warm', author: 'alice', likes: 7 },
+      ]),
+    },
+    async (base) => {
+      const out = await runAsync(dir, { RECIPE_MKT_BASE: base }, 'search', 'coffee');
+      assert.match(out, /coffee-x/);
+      assert.match(out, /Coffee X/);
+      assert.match(out, /♥7 · alice/);
+      assert.match(out, /recipe use mkt:<slug>/);
+    }
+  );
+});
+
+test('use mkt: installs + activates + records the ref, and reload re-fetches', async () => {
+  const dir = tmpDir();
+  run(dir, 'init');
+  const fixtures = {
+    '/api/recipes/coffee/raw': '---\nname: mktcoffee\n---\n\n## [always] x\nfirst body\n',
+  };
+  await withGhServer(fixtures, async (base) => {
+    await runAsync(dir, { RECIPE_MKT_BASE: base }, 'use', 'mkt:coffee');
+    const rdir = path.join(dir, '.claude', 'recipes');
+    assert.equal(fs.readFileSync(path.join(rdir, 'active'), 'utf8').trim(), 'mktcoffee.md');
+    assert.equal(fs.readFileSync(path.join(rdir, 'source'), 'utf8').trim(), 'mkt:coffee');
+    assert.match(fs.readFileSync(path.join(rdir, 'mktcoffee.md'), 'utf8'), /first body/);
+    // reload pulls the current marketplace copy
+    fixtures['/api/recipes/coffee/raw'] = '---\nname: mktcoffee\n---\n\n## [always] x\nsecond body\n';
+    await runAsync(dir, { RECIPE_MKT_BASE: base }, 'reload');
+    assert.match(fs.readFileSync(path.join(rdir, 'mktcoffee.md'), 'utf8'), /second body/);
+  });
+});
+
+test('use mkt: with an unknown slug fails cleanly (exit 1)', async () => {
+  const dir = tmpDir();
+  run(dir, 'init');
+  await withGhServer({}, (base) =>
+    assertRejects(runAsync(dir, { RECIPE_MKT_BASE: base }, 'use', 'mkt:nope'), /HTTP 404/)
+  );
+});
+
+test('an mkt: recipe can extend a gh: ref', async () => {
+  const dir = tmpDir();
+  run(dir, 'init');
+  await withGhServer(
+    {
+      '/api/recipes/child/raw': '---\nname: mktchild\nextends: [gh:u/r/core.md]\n---\n\n## [ui] design\nchild design\n',
+      '/u/r/HEAD/core.md': '---\nname: ghcore\n---\n\n## [always] base\ncore base body\n',
+    },
+    async (base) => {
+      await runAsync(dir, { RECIPE_MKT_BASE: base, RECIPE_GH_BASE: base }, 'use', 'mkt:child');
+      const flat = fs.readFileSync(path.join(dir, '.claude', 'recipes', 'mktchild.md'), 'utf8');
+      assert.match(flat, /core base body/);
+      assert.match(flat, /child design/);
+    }
+  );
+});
+
+test('an mkt: recipe extending a relative path is rejected', async () => {
+  const dir = tmpDir();
+  run(dir, 'init');
+  await withGhServer(
+    { '/api/recipes/child/raw': '---\nname: mktchild\nextends: [./core.md]\n---\n\n## [ui] design\nx\n' },
+    (base) => assertRejects(runAsync(dir, { RECIPE_MKT_BASE: base }, 'use', 'mkt:child'), /may only extend/i)
+  );
+});
+
+test('use rejects a bad mkt slug before any network call', () => {
+  assert.throws(() => run(tmpDir(), 'use', 'mkt:../evil'), /bad ref/i);
+});

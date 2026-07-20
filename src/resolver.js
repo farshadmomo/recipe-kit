@@ -3,6 +3,12 @@ const fs = require('fs');
 const path = require('path');
 const { parseRecipe, mergeRecipes } = require('./parser');
 
+// Remote refs are fetched, not read from disk: gh: (a repo file) and mkt: (a
+// marketplace slug). Everything else is a local path.
+function isRemote(ref) {
+  return ref.startsWith('gh:') || ref.startsWith('mkt:');
+}
+
 // gh:u/r/recipes/x.md → gh:u/r/recipes; bare gh:u/r → itself (the repo IS the dir).
 function ghDir(ref) {
   const parts = ref.slice(3).split('/');
@@ -20,7 +26,9 @@ function rebaseGh(ghBase, rel) {
 }
 
 // Cycle key: gh:u/r and gh:u/r/recipe.md fetch the same file — canonicalize both.
+// mkt: refs are their own key; locals key by absolute path.
 function resolveKey(ref, baseDir) {
+  if (ref.startsWith('mkt:')) return ref;
   if (!ref.startsWith('gh:')) return path.resolve(baseDir, ref);
   const parts = ref.slice(3).split('/');
   return parts.length === 2 ? `${ref}/recipe.md` : ref;
@@ -34,10 +42,12 @@ async function resolveRecipe(ref, baseDir, seen, fetchRemote) {
   if (seen.has(key)) throw new Error(`circular extends via ${ref}`);
   seen.add(key);
   let text, nextBase;
-  if (ref.startsWith('gh:')) {
+  if (isRemote(ref)) {
     if (!fetchRemote) throw new Error(`remote extends (${ref}) — run: recipe reload`);
     text = await fetchRemote(ref);
-    nextBase = ghDir(ref); // gh base — relative extends rebase against it below
+    // gh base is the containing dir so relative extends rebase against it; mkt
+    // has no dir, so its base is the ref itself (any relative extends errors below).
+    nextBase = ref.startsWith('gh:') ? ghDir(ref) : ref;
   } else {
     const abs = path.resolve(baseDir, ref);
     text = fs.readFileSync(abs, 'utf8');
@@ -46,9 +56,12 @@ async function resolveRecipe(ref, baseDir, seen, fetchRemote) {
   const recipe = parseRecipe(text);
   let acc = null;
   for (let parentRef of recipe.meta.extends) {
-    // inside a gh recipe, a relative extends stays inside the repo via the gh base
-    if (nextBase.startsWith('gh:') && !parentRef.startsWith('gh:') && !path.isAbsolute(parentRef)) {
+    const relative = !isRemote(parentRef) && !path.isAbsolute(parentRef);
+    if (relative && nextBase.startsWith('gh:')) {
+      // inside a gh recipe, a relative extends stays inside the repo via the gh base
       parentRef = rebaseGh(nextBase, parentRef);
+    } else if (relative && nextBase.startsWith('mkt:')) {
+      throw new Error(`mkt recipe ${ref} may only extend gh: or mkt: refs, not ${parentRef}`);
     }
     const parent = await resolveRecipe(parentRef, nextBase, seen, fetchRemote);
     acc = acc ? mergeRecipes(acc, parent) : parent;

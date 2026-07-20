@@ -13,9 +13,9 @@ const { resolveRecipe, ghDir, rebaseGh } = require('../src/resolver');
 async function main() {
   const [cmd, ...rest] = process.argv.slice(2);
   const arg = rest.join(' ');
-  const commands = { init, use, list, off, new: scaffold, test: testPrompt, lint, reload, setup, discover, export: exportRecipe };
+  const commands = { init, use, list, off, new: scaffold, test: testPrompt, lint, reload, setup, discover, export: exportRecipe, search, publish };
   if (!cmd || !Object.hasOwn(commands, cmd)) {
-    console.log('usage: recipe <init | use <ref> | list | off | new | test <prompt> | lint [ref] | discover | export [--out file] | reload | setup [--yes]>');
+    console.log('usage: recipe <init | use <ref> | search <term> | publish | list | off | new | test <prompt> | lint [ref] | discover | export [--out file] | reload | setup [--yes]>');
     process.exit(cmd ? 1 : 0);
   }
   // rest (raw arg array) lets export read --out; other commands ignore it.
@@ -53,14 +53,15 @@ function init() {
 }
 
 async function use(ref) {
-  if (!ref) throw new Error('usage: recipe use <gh:user/repo[/path] | ./file.md>');
-  const recipe = await resolveRecipe(ref, process.cwd(), new Set(), fetchGh);
+  if (!ref) throw new Error('usage: recipe use <gh:user/repo[/path] | mkt:slug | ./file.md>');
+  const recipe = await resolveRecipe(ref, process.cwd(), new Set(), fetchRemote);
   const { serializeRecipe } = require('../src/parser');
   fs.mkdirSync(RECIPES_DIR, { recursive: true });
   const file = `${recipe.meta.name}.md`;
   fs.writeFileSync(path.join(RECIPES_DIR, file), serializeRecipe(recipe));
   fs.writeFileSync(path.join(RECIPES_DIR, 'active'), file + '\n');
-  const source = ref.startsWith('gh:') ? ref : path.resolve(process.cwd(), ref);
+  const remote = ref.startsWith('gh:') || ref.startsWith('mkt:');
+  const source = remote ? ref : path.resolve(process.cwd(), ref);
   fs.writeFileSync(path.join(RECIPES_DIR, 'source'), source + '\n');
   console.log(`recipe: ${recipe.meta.name} active`);
   const missing = missingSkills(recipe.meta.requires || {});
@@ -173,7 +174,7 @@ async function lint(ref) {
   const { DEFAULT_ROUTES } = require('../src/router');
   let recipe;
   if (ref) {
-    recipe = await resolveRecipe(ref, process.cwd(), new Set(), fetchGh);
+    recipe = await resolveRecipe(ref, process.cwd(), new Set(), fetchRemote);
   } else {
     const { activeRecipeFile } = require('../src/recipe-hook');
     const active = activeRecipeFile(process.cwd());
@@ -360,20 +361,21 @@ function exportRecipe(arg, rest) {
   }
 }
 
-function fetchGh(ref) {
-  const parts = ref.slice(3).split('/');
-  if (parts.length < 2) return Promise.reject(new Error(`bad ref: ${ref}`));
-  const base = process.env.RECIPE_GH_BASE || 'https://raw.githubusercontent.com';
-  const [user, repo, ...rest] = parts;
-  const file = rest.length ? rest.join('/') : 'recipe.md';
-  const url = `${base}/${user}/${repo}/HEAD/${file}`;
+const MKT = process.env.RECIPE_MKT_BASE || 'https://recipe-kit-marketplace.vercel.app';
+// A marketplace slug is one path segment, alphanumeric-led — no slashes or
+// leading dots, so it can't traverse the URL path.
+const SLUG_RE = /^[a-z0-9][a-z0-9._-]*$/i;
+
+// GET a URL, resolve the body on 200, reject on anything else. label sharpens
+// the error message. Shared by gh:, mkt:, and marketplace search.
+function fetchUrl(url, label) {
   const httpMod = url.startsWith('https:') ? require('https') : require('http');
   return new Promise((resolve, reject) => {
     httpMod
       .get(url, (res) => {
         if (res.statusCode !== 200) {
           res.resume();
-          return reject(new Error(`${ref} → HTTP ${res.statusCode} (${url})`));
+          return reject(new Error(`${label} → HTTP ${res.statusCode}`));
         }
         let data = '';
         res.on('data', (c) => (data += c));
@@ -381,6 +383,61 @@ function fetchGh(ref) {
       })
       .on('error', reject);
   });
+}
+
+function fetchGh(ref) {
+  const parts = ref.slice(3).split('/');
+  if (parts.length < 2) return Promise.reject(new Error(`bad ref: ${ref}`));
+  const base = process.env.RECIPE_GH_BASE || 'https://raw.githubusercontent.com';
+  const [user, repo, ...rest] = parts;
+  const file = rest.length ? rest.join('/') : 'recipe.md';
+  const url = `${base}/${user}/${repo}/HEAD/${file}`;
+  return fetchUrl(url, `${ref} (${url})`);
+}
+
+function fetchMkt(ref) {
+  const slug = ref.slice(4);
+  if (!SLUG_RE.test(slug)) return Promise.reject(new Error(`bad ref: ${ref}`));
+  return fetchUrl(`${MKT}/api/recipes/${slug}/raw`, ref);
+}
+
+// Dispatch a remote ref to its fetcher. resolveRecipe passes this straight
+// through so gh: and mkt: extends both resolve; the hook passes null instead.
+function fetchRemote(ref) {
+  if (ref.startsWith('gh:')) return fetchGh(ref);
+  if (ref.startsWith('mkt:')) return fetchMkt(ref);
+  return Promise.reject(new Error(`bad ref: ${ref}`));
+}
+
+// Search the marketplace and print installable rows. Any network/parse failure
+// surfaces through main's catch as a clean `recipe: …` line + exit 1.
+async function search(term) {
+  const url = `${MKT}/api/recipes?q=${encodeURIComponent(term || '')}`;
+  const rows = JSON.parse(await fetchUrl(url, 'marketplace search'));
+  if (!Array.isArray(rows)) throw new Error('marketplace search: unexpected response');
+  if (!rows.length) {
+    console.log('recipe: no recipes found');
+    return;
+  }
+  for (const r of rows) {
+    console.log(`  ${r.slug}  ${r.name} — ${r.description}  (♥${r.likes} · ${r.author})`);
+  }
+  console.log('install: recipe use mkt:<slug>');
+}
+
+// Open the marketplace publish page in a browser (auth lives there, not in the
+// CLI). URL is printed first so headless users can copy it.
+function publish() {
+  const url = `${MKT}/publish`;
+  console.log(`opening ${url}`);
+  const opener = process.platform === 'win32'
+    ? ['cmd', ['/c', 'start', '', url]]
+    : process.platform === 'darwin'
+      ? ['open', [url]]
+      : ['xdg-open', [url]];
+  try {
+    require('child_process').spawn(opener[0], opener[1], { detached: true, stdio: 'ignore' }).unref();
+  } catch {} // no browser / headless — the URL is already printed
 }
 
 function list() {

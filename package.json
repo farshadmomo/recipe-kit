@@ -1,6 +1,6 @@
 {
   "name": "recipe-kit",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "description": "Shareable taste for AI coding — recipes injected into Claude Code prompts",
   "keywords": [
     "claude",
